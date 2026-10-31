@@ -39,6 +39,10 @@ The drill-live workflow runs real resilience drills in CI every three hours. It 
 
 An anchor or drill is reported only when its corresponding operation and evidence support that claim. See [the architecture](docs/ARCHITECTURE.md), [the technical research record](docs/TECHNICAL_RESEARCH.md), and [the testing evidence](docs/TESTING.md) for scope and verification boundaries.
 
+## Contract platform choice: ink! via pallet-contracts, with a documented revive path
+
+The resilience registry is a 6.8 KB ink! contract deployed through pallet-contracts on Portaldot V3. This was a deliberate evaluation, not a default: the ink! path is native to the Substrate toolchain the engine already operates (BABE/GRANDPA evidence decoding, on-chain anchoring), registry upload plus instance deposit is approximately 548 tPOT, and each certificate anchor costs approximately 1.4 tPOT, versus approximately 7.7 tPOT for the equivalent EVM-side registry. The official ink! documentation has stated it will no longer be actively maintained or developed from January 2026; this is factored in, and because the registry is isolated behind the engine's `V3AnchorService`, a future port to revive/PolkaVM is a bounded change to that service boundary rather than an engine rewrite. Deposit levels on V3 are expected to continue being adjusted, so the cost model reads actual chain deposits at runtime instead of hardcoding them.
+
 ## Roadmap
 
 The implementation plan and progress log describe the current state and remaining work. Planned areas include deployment adapters for Docker and Kubernetes/Helm, additional validator operations, and broader end-to-end verification. Planned capabilities are not represented as completed features. See [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) and [Progress](docs/PROGRESS.md).

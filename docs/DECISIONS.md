@@ -820,3 +820,11 @@ Format: context → decision → alternatives → consequences. Newest entries a
 - **Decision**: Use this exact line as Kaizen's positioning statement: "Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake." Place it once in each requested copy slot, replacing similar landing copy where applicable. This is a copy-only change and does not change product behavior or scope.
 - **Alternatives considered**: Add a separate new pitch without replacing existing UI text (rejected: it would stack messaging and violate the one-line-per-screen constraint).
 - **Consequences**: The approved wording appears in the README, landing page, HTML title and meta description, footer, and PROJECT_SPEC introduction. These are positioning claims, not changes to implementation status.
+
+## DEC-031: Registry ships on ink!/pallet-contracts; revive/PolkaVM documented as the bounded migration path
+
+Date: 2026-10-31.
+
+Context: mentors asked whether pallet-contracts is Portaldot's recommended production path or whether Kaizen should target the EVM/revive side, and noted the official ink! documentation has stated it will no longer be actively maintained or developed from January 2026. Measured costs on V3: registry (6.8 KB) upload plus instance deposit ~548 tPOT; certificate anchor ~1.4 tPOT via ink! vs ~7.7 tPOT on the equivalent EVM registry.
+
+Decision: keep the registry on ink!/pallet-contracts for the hackathon scope. The choice is documented in the README and submission writeup with the cost comparison and the maintenance-horizon tradeoff. Because all anchoring goes through `V3AnchorService`, a future port to revive/PolkaVM is scoped as a change to that one service boundary. Cost logic reads live chain deposits at runtime; deposit levels are expected to continue being adjusted.
