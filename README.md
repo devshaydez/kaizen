@@ -39,6 +39,10 @@ The drill-live workflow runs real resilience drills in CI every three hours. It 
 
 An anchor or drill is reported only when its corresponding operation and evidence support that claim. See [the architecture](docs/ARCHITECTURE.md), [the technical research record](docs/TECHNICAL_RESEARCH.md), and [the testing evidence](docs/TESTING.md) for scope and verification boundaries.
 
+### Monitoring surface
+
+Read-only monitoring polls the public V3 WS endpoint at roughly one request per block and reads validator identity from on-chain state: `session.validators` (current validators), `session.queuedKeys` / `session.nextKeys` (next session keys), `session.currentIndex`, `babe.authorities`, and `grandpa.authorities`. No official validator list is published, so on-chain state is the source of truth. See [Technical research](docs/TECHNICAL_RESEARCH.md), R-25.
+
 ## Roadmap
 
 The implementation plan and progress log describe the current state and remaining work. Planned areas include deployment adapters for Docker and Kubernetes/Helm, additional validator operations, and broader end-to-end verification. Planned capabilities are not represented as completed features. See [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) and [Progress](docs/PROGRESS.md).
