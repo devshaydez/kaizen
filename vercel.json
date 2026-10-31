@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm ci && npm run build",
+  "buildCommand": "npm ci "buildCommand": "npm ci && npm run build""buildCommand": "npm ci && npm run build" VITE_KAIZEN_PUBLIC=1 npm run build",
   "outputDirectory": "apps/web/dist",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
