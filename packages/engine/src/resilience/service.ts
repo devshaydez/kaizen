@@ -279,7 +279,7 @@ export class ResilienceService {
         continue;
       }
       const check = await checkCertificateSignature(cert, run);
-      if (!check.fingerprintMatches || !check.signatureValid || !check.addressMatchesKey) {
+      if (!check.fingerprintMatches || !check.signatureValid || !check.addressMatchesKey || !check.metadataMatches) {
         excluded.push(cert.fingerprint);
         continue;
       }

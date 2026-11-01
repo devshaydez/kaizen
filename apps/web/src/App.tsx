@@ -4,9 +4,10 @@
  * ConsoleProvider (REST state + WS invalidation). Nothing is simulated.
  */
 
-import type { JSX } from 'react';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { useState, type JSX } from 'react';
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Live } from './pages/Live';
 import { Backdrop } from './components/Backdrop';
 import { NodeDrawer } from './components/NodeDrawer';
 import { STEPS, ease } from './components/ui';
@@ -15,6 +16,9 @@ import { useEventsContext } from './state/EventsContext';
 import { useAsync } from './state/useAsync';
 import { apiClient } from './api/client';
 import { ACTIVE_FAULT_STATES } from './lib/model';
+import { REPLAY } from './lib/mode';
+import { ReplayBanner } from './components/ReplayBanner';
+import { ConsoleDataNotice } from './components/ConsoleDataNotice';
 import { Networks } from './pages/Networks';
 import { Landing } from './pages/Landing';
 import { Create } from './pages/Create';
@@ -27,6 +31,9 @@ import { Deployments } from './pages/Deployments';
 import { V3 } from './pages/V3';
 import { Settings } from './pages/Settings';
 
+/** Hosted deployment (Vercel): no engine behind it; the console runs in replay mode. */
+export const HOSTED = REPLAY;
+
 interface NavItem {
   path: string;
   label: string;
@@ -34,16 +41,20 @@ interface NavItem {
 }
 
 export const NAV: NavItem[] = [
+  { path: '/create', label: 'Create network', needsNet: false },
+  { path: '/live', label: 'Live drills', needsNet: false },
+  { path: '/lab', label: 'Failure Lab', needsNet: true },
+  { path: '/scenarios', label: 'Scenarios', needsNet: false },
   { path: '/overview', label: 'Overview', needsNet: false },
   { path: '/networks', label: 'Networks', needsNet: false },
   { path: '/validators', label: 'Validators', needsNet: true },
-  { path: '/lab', label: 'Failure Lab', needsNet: true },
-  { path: '/scenarios', label: 'Scenarios', needsNet: false },
   { path: '/incidents', label: 'Incidents', needsNet: true },
   { path: '/deployments', label: 'Deployments', needsNet: true },
-  { path: '/settings', label: 'Settings', needsNet: false },
   { path: '/v3', label: 'Portaldot V3', needsNet: false },
+  { path: '/settings', label: 'Settings', needsNet: false },
 ];
+
+const ACTION_PATHS = new Set(['/create', '/live', '/lab', '/scenarios']);
 
 /** Where each lifecycle pill navigates. */
 const STEP_PATHS = ['/create', '/overview', '/lab', '/incidents', '/lab', '/deployments'];
@@ -72,6 +83,7 @@ export function watermarkFor(path: string, faultActive: boolean): string {
     deployments: 'DEPLOY',
     settings: 'SETTINGS',
     v3: 'PORTALDOT',
+    live: 'PROOF',
   };
   return words[section] ?? 'KAIZEN';
 }
@@ -97,6 +109,23 @@ function NetChip(): JSX.Element | null {
 
 /** Real control-plane reachability (health endpoint + event stream). */
 function ControlPlane(): JSX.Element {
+  if (REPLAY) return <ReplayPlane />;
+  return <LivePlane />;
+}
+
+/** Replay mode: no control plane; data comes from recorded drills. */
+function ReplayPlane(): JSX.Element {
+  return (
+    <div className="cp" aria-label="Control plane status">
+      data source
+      <br />
+      <span className="dotc" />
+      <b>replay</b> · recorded drills
+    </div>
+  );
+}
+
+function LivePlane(): JSX.Element {
   const { status } = useEventsContext();
   const health = useAsync((_s) => apiClient.health({ timeoutMs: 4000 }), []);
   const up = status === 'open' || Boolean(health.data);
@@ -114,39 +143,54 @@ function ControlPlane(): JSX.Element {
 function Shell(): JSX.Element {
   const loc = useLocation();
   const nav = useNavigate();
+  const reduceMotion = useReducedMotion();
   const { network, faults } = useConsole();
   const ph = stepFor(loc.pathname);
   const section = '/' + (loc.pathname.split('/')[1] ?? '');
   const faultActive = faults.some((f) => f.mode === 'execute' && ACTIVE_FAULT_STATES.has(f.state));
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <>
       <Backdrop word={watermarkFor(loc.pathname, faultActive)} />
       <div className="app">
-        <aside className="side">
+        <aside className={`side ${menuOpen ? 'open' : ''}`}>
+          <button type="button" className="menu-btn" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+            <span /><span /><span />
+          </button>
           <Link to="/" className="brand" aria-label="Kaizen home">
             KAIZEN
           </Link>
           <LayoutGroup id="nav">
-            <nav aria-label="Console">
-              {NAV.map((n) => {
-                const off = n.needsNet && !network;
-                const on = n.path === section;
-                return (
-                  <button
-                    type="button"
-                    key={n.path}
-                    className={`nav ${on ? 'on' : ''}`}
-                    disabled={off}
-                    aria-current={on ? 'page' : undefined}
-                    title={off ? 'Create or select a network first' : undefined}
-                    onClick={() => nav(n.path)}
-                  >
-                    {on && <motion.span layoutId="navpill" className="pill" transition={{ duration: 0.3, ease }} />}
-                    <span>{n.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
+            <motion.nav
+              aria-label="Console"
+              initial={reduceMotion ? false : { opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2, ease }}
+            >
+            {(['Actions', 'Inspect'] as const).map((group) => (
+              <div className="nav-group" key={group}>
+                <div className="nav-group-title">{group}</div>
+                {NAV.filter((n) => ACTION_PATHS.has(n.path) === (group === 'Actions')).map((n) => {
+                  const off = n.needsNet && !network;
+                  const on = n.path === section;
+                  return (
+                    <button
+                      type="button"
+                      key={n.path}
+                      className={`nav ${on ? 'on' : ''}`}
+                      disabled={off}
+                      aria-current={on ? 'page' : undefined}
+                      title={off ? 'Create or select a network first' : undefined}
+                      onClick={() => { setMenuOpen(false); nav(n.path); }}
+                    >
+                      {on && <motion.span layoutId="navpill" className="pill" transition={{ duration: reduceMotion ? 0 : 0.2, ease }} />}
+                      <span>{n.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            </motion.nav>
           </LayoutGroup>
           <ControlPlane />
         </aside>
@@ -170,14 +214,16 @@ function Shell(): JSX.Element {
             </LayoutGroup>
             <NetChip />
           </header>
+          {REPLAY && <ReplayBanner />}
+          <ConsoleDataNotice path={loc.pathname} />
           <AnimatePresence mode="wait">
             <motion.div
               key={section}
               className="page"
-              initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
+              initial={reduceMotion ? false : { opacity: 0, y: 10, filter: 'blur(6px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -6, filter: 'blur(4px)' }}
-              transition={{ duration: 0.3, ease }}
+              exit={reduceMotion ? undefined : { opacity: 0, y: -6, filter: 'blur(4px)' }}
+              transition={{ duration: reduceMotion ? 0 : 0.2, ease }}
             >
               <Routes location={loc}>
                 <Route path="/create" element={<Create />} />
@@ -189,6 +235,7 @@ function Shell(): JSX.Element {
                 <Route path="/incidents" element={<Incidents />} />
                 <Route path="/deployments" element={<Deployments />} />
                 <Route path="/v3" element={<V3 />} />
+                <Route path="/live" element={<Live />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<Navigate to="/overview" replace />} />
               </Routes>

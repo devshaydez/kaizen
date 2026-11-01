@@ -69,6 +69,7 @@ describe('issueCertificate + checkCertificateSignature', () => {
       fingerprintMatches: true,
       signatureValid: true,
       addressMatchesKey: true,
+      metadataMatches: true,
       dev: false,
     });
   });
@@ -92,6 +93,20 @@ describe('issueCertificate + checkCertificateSignature', () => {
     expect(check.addressMatchesKey).toBe(false);
 
     expect((await checkCertificateSignature(cert, fixtureRun({ id: 'other' }))).fingerprintMatches).toBe(false);
+  });
+
+  it.each([
+    ['validatorId', { validatorId: 'alice' }],
+    ['networkId', { networkId: 'net_2' }],
+    ['runHash', { runHash: `0x${'00'.repeat(32)}` }],
+    ['run id', { runId: 'other-run' }],
+  ] as const)('rejects a certificate with tampered top-level %s metadata', async (_field, tampering) => {
+    const signer = await loadResilienceSigner({ env: { KAIZEN_RESILIENCE_SIGNER_SURI: '//Bob' } });
+    const run = fixtureRun();
+    const cert = await issueCertificate({ run, chain: fixtureEvidence(), signer });
+    const check = await checkCertificateSignature({ ...cert, ...tampering }, run);
+    expect(check.metadataMatches).toBe(false);
+    expect(check.fingerprintMatches).toBe(false);
   });
 
   it('refuses unfinished or rejected runs and evidence from another network', async () => {

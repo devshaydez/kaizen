@@ -1,4 +1,4 @@
-# Technical Research — Portaldot Capability Matrix
+# Technical Research: Portaldot Capability Matrix
 
 Every entry records: question → source/experiment → evidence → status →
 implications → uncertainties → next verification step.
@@ -16,7 +16,7 @@ included verbatim.
 
 ---
 
-## R-01 — How is Portaldot installed; what artifacts exist?
+## R-01: How is Portaldot installed; what artifacts exist?
 
 - **Question**: What do we download, and what binaries does it contain?
 - **Source**: GitHub API listing of `portaldotVolunteer/Portaldot-node`;
@@ -41,7 +41,7 @@ Reproduce:
 curl -s https://api.github.com/repos/portaldotVolunteer/Portaldot-node/contents/
 ```
 
-## R-02 — Actual node startup command, flags, configuration surface
+## R-02: Actual node startup command, flags, configuration surface
 
 - **Question**: What CLI does the real binary expose?
 - **Source**: Direct execution of the downloaded binary (`--help`, `--version`).
@@ -64,12 +64,12 @@ curl -s https://api.github.com/repos/portaldotVolunteer/Portaldot-node/contents/
 - **Implications**: Everything Kaizen needs for process orchestration, identity,
   key management, and topology wiring is exposed by the binary itself.
 - **Uncertainties**: None on flag existence; semantics of some flags follow
-  generic Substrate behavior (acceptable risk — see RSK-08).
+  generic Substrate behavior (acceptable risk: see RSK-08).
 - **Next step**: none required.
 
 Reproduce: `./portaldot_dev --help`
 
-## R-03 — Starting a local development network (single node)
+## R-03: Starting a local development network (single node)
 
 - **Question**: Does `portaldot_dev --dev --alice` produce a live chain here?
 - **Source**: Direct experiment.
@@ -88,7 +88,7 @@ Reproduce:
   --rpc-port 19933 --ws-port 19944 --no-telemetry --name kaizen-probe-1
 ```
 
-## R-04 — Multi-node local network (peer discovery + sync)
+## R-04: Multi-node local network (peer discovery + sync)
 
 - **Question**: Can several local nodes be configured to discover and connect?
 - **Source**: Direct 2-node experiment with exported local chain spec.
@@ -106,7 +106,7 @@ Reproduce:
   keys (`key generate-node-key --file`), wires the bootnode from the real
   peer id, and starts both nodes; the live test converges on `peers ≥ 1` on
   both nodes, bidirectional peer-id cross-check, identical best hash, and
-  equal progressing finalized heights — all read via `@polkadot/api` over WS
+  equal progressing finalized heights: all read via `@polkadot/api` over WS
   (`test/integration/network.int.test.ts`).
 - **Status**: VERIFIED (2-node, explicit bootnode wiring, same host).
 - **Implications**: Two-, four-validator and validator+fullnode presets are
@@ -126,7 +126,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   --base-path B --port 30354 --rpc-port 19954 --ws-port 19965 --prometheus-port 9716 --name kaizen-B
 ```
 
-## R-05 — Topology presets beyond two nodes
+## R-05: Topology presets beyond two nodes
 
 - **Question**: Do four-validator and validator+fullnode topologies work?
 - **Source**: Inference from R-04 + `--help` (`--charlie`…`--ferdie` shortcuts)
@@ -135,8 +135,8 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   - **Phase 0/1**: mechanism proven for 2 nodes; well-known keys for up to 6
     named validators exist.
   - **Phase 2A (2026-10-10, live spike)**: the Local Testnet plain spec seeds
-    exactly **TWO** genesis authorities — Alice `5GrwvaEF…` and Bob
-    `5FHneW46x…` — with `staking.validatorCount=2`,
+    exactly **TWO** genesis authorities: Alice `5GrwvaEF…` and Bob
+    `5FHneW46x…`: with `staking.validatorCount=2`,
     `minimumValidatorCount=2`, matching `session.keys`, `staking.stakers`
     (3e18 bond each) and `staking.invulnerables`. Charlie/Dave/Eve are NOT
     genesis authorities but ARE funded in genesis balances (5 UNITS each).
@@ -159,12 +159,12 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Implications**: Presets ARE data-driven from the topology plan; any
   network whose validator keys exceed {alice, bob} gets a patched per-network
   spec (DEC-011). Four running processes alone never count as four
-  authorities — validation and labeling must reflect that.
+  authorities: validation and labeling must reflect that.
 - **Uncertainties**: finality quorum with a *partially* offline authority set
-  (e.g. 3-of-4 online) — relevant to Phase 3/4 failure work, not tested here.
+  (e.g. 3-of-4 online): relevant to Phase 3/4 failure work, not tested here.
 - **Next step**: none for Phase 2A (topologies live-verified end-to-end).
 
-## R-06 — Ports, RPC endpoints, WebSocket endpoints
+## R-06: Ports, RPC endpoints, WebSocket endpoints
 
 - **Question**: Which endpoints exist and how are they addressed?
 - **Source**: `--help`, node logs, live RPC calls.
@@ -181,12 +181,12 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   stopped and restarted all verified in `test/integration/rpc.int.test.ts`.
 - **Status**: VERIFIED (HTTP + WS both exercised by live tests).
 - **Implications**: Kaizen must allocate 3+ ports per node (p2p, HTTP, WS) plus
-  Prometheus — port management is a core engine responsibility.
+  Prometheus: port management is a core engine responsibility.
 - **Uncertainties**: None material for the local-node use case.
 - **Next step**: none required (Phase 2 may add WS subscriptions for the
   monitoring sampler).
 
-## R-07 — Which RPC methods are available; what do responses contain?
+## R-07: Which RPC methods are available; what do responses contain?
 
 - **Question**: Can Kaizen read real operational data over RPC?
 - **Source**: Live JSON-RPC calls against the running dev node (HTTP).
@@ -216,7 +216,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   `system_addReservedPeer` on this build (needs `--reserved-only` contexts).
 - **Next step**: T-3.1 exercises reserved-peer manipulation for disconnects.
 
-## R-08 — Node identity, health, sync, peer inspection
+## R-08: Node identity, health, sync, peer inspection
 
 - **Question**: Can each be inspected reliably?
 - **Source**: Live RPC + logs (R-07, R-04).
@@ -228,7 +228,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Implications**: Incident detection (R-15) has all raw signals available.
 - **Next step**: none required.
 
-## R-09 — Health checks, metrics, graceful shutdown
+## R-09: Health checks, metrics, graceful shutdown
 
 - **Question**: Does the binary support reliable ops hooks?
 - **Source**: `--help`, node logs, kill experiment.
@@ -237,13 +237,13 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   `substrate_block_height{status="finalized"} 2`. `SIGTERM` (plain `kill`)
   terminated both test nodes; `pgrep` confirmed exit; no orphan processes.
 - **Status**: PARTIALLY VERIFIED (metrics + exit verified; "graceful" = clean
-  DB flush after SIGTERM not proven — no corruption observed in restarts).
+  DB flush after SIGTERM not proven: no corruption observed in restarts).
 - **Implications**: Prometheus is a good secondary signal source; process
   manager should use SIGTERM → wait → SIGKILL escalation.
 - **Uncertainties**: Behavior under SIGKILL (crash recovery on restart).
 - **Next step**: T-1.4 tests SIGKILL + restart to confirm DB recovery.
 
-## R-10 — Chain spec creation (`build-spec`)
+## R-10: Chain spec creation (`build-spec`)
 
 - **Question**: Can Kaizen generate/modify chain specs for topologies?
 - **Source**: Direct execution.
@@ -260,19 +260,19 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
     raw spec ran a functioning 4-authority network (see R-05).
 - **Status**: VERIFIED (generation + plain-spec surgery + raw rebuild; the
   raw-rebuild step regenerates genesis storage from the runtime genesis
-  config — no direct raw-storage editing is needed or attempted).
+  config: no direct raw-storage editing is needed or attempted).
 - **Implications**: ChainSpecService = plain spec → typed patch → raw spec,
   per network, with an audit sidecar (DEC-011).
 - **Uncertainties**: editing RAW genesis storage directly (hand-written
-  storage keys) remains untested — deliberately out of scope.
+  storage keys) remains untested: deliberately out of scope.
 - **Next step**: none for Phase 2A.
 
-## R-11 — Validator operation requirements (keys, funding, privileges)
+## R-11: Validator operation requirements (keys, funding, privileges)
 
 - **Question**: What does it take to run validator nodes?
 - **Source**: `--help` semantics; docs (staking/session extrinsics); R-04 result.
 - **Evidence**: `--alice`…`--ferdie`/`--one`/`--two` = `--name X --validator`
-  **plus session keys inserted into the keystore** — i.e. on the Local Testnet
+  **plus session keys inserted into the keystore**: i.e. on the Local Testnet
   spec, named well-known accounts act as genesis authorities; our 2-node
   Alice+Bob network produced blocks and finalized, proving validator operation
   works without manual staking on that spec. `key insert` exists for injecting
@@ -288,7 +288,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-5.1/T-5.2 read `Session`/`staking` storage on a live local
   network and record era/session timing.
 
-## R-12 — Staking extrinsics (Portaldot-specific)
+## R-12: Staking extrinsics (Portaldot-specific)
 
 - **Question**: Which staking operations does the runtime expose?
 - **Source**: Official docs `module-interface/extrinsics/staking.html`.
@@ -305,7 +305,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-5.3 exercises one `bond`+`validate` on a throwaway local
   network and records the events.
 
-## R-13 — Session-key operations
+## R-13: Session-key operations
 
 - **Question**: Can Kaizen support session-key ops?
 - **Source**: Official docs `extrinsics/session.html`; `key` subcommand help.
@@ -321,7 +321,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-5.4 decodes `Session.Keys` from live metadata before any
   implementation.
 
-## R-14 — imOnline events (validator liveness signals)
+## R-14: imOnline events (validator liveness signals)
 
 - **Question**: Can validator health be observed via runtime events?
 - **Source**: Official docs `events/imOnline.html`; local spec genesis keys.
@@ -335,7 +335,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-4.1 subscribes to events while killing a validator and
   records whether `SomeOffline` fires within a session boundary.
 
-## R-15 — Runtime identity and metadata
+## R-15: Runtime identity and metadata
 
 - **Question**: What runtime/SDK compatibility constraints exist?
 - **Source**: Live `state_getRuntimeVersion` and `state_getMetadata`.
@@ -344,18 +344,18 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   13 runtime APIs. Metadata magic `meta`, **version 13 (V13)**.
 - **Status**: VERIFIED.
 - **Implications**: V13 metadata + legacy `LookupSource` types (per PDK) mean
-  SDK choice matters — `@polkadot/api` is known-good on V13; Python
+  SDK choice matters: `@polkadot/api` is known-good on V13; Python
   `substrate-interface` has a documented signing bug on this chain (R-16).
 - **Next step**: none required.
 
-## R-16 — SDK/CLI ecosystem quirks (prior art from `portaldot-dev-kit`)
+## R-16: SDK/CLI ecosystem quirks (prior art from `portaldot-dev-kit`)
 
 - **Question**: What traps did the hackathon-winning toolkit hit?
 - **Source**: `github.com/PugarHuda/portaldot-dev-kit` README (1st place,
-  Mini Hackathon S1 — a *different* project; we only learn from its findings).
+  Mini Hackathon S1: a *different* project; we only learn from its findings).
 - **Evidence**: (a) Python `substrate-interface` mis-signs Assets-pallet calls
   on V13 metadata because `T::Balance` resolves to the global u128 instead of
-  the pallet-scoped u64 — TS signing works; (b) Contracts pallet is a legacy
+  the pallet-scoped u64: TS signing works; (b) Contracts pallet is a legacy
   pre-2021 rent-model build incompatible with modern ink!/cargo-contract;
   (c) dev-chain DB can wedge with "BABE: Unexpected epoch change"; fix =
   `purge-chain --dev -y`; (d) node runs fine with `--ws-external --rpc-cors all`;
@@ -368,7 +368,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-1.4 adds DB-wedge detection (stalled height + BABE log
   pattern) to the process manager.
 
-## R-17 — Containerizing the node
+## R-17: Containerizing the node
 
 - **Question**: Can the actual binary run in Docker?
 - **Source**: `file`/`ldd` on the binary; `docker ps` (daemon check).
@@ -382,7 +382,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-6.1 builds the image and runs a `--dev` container with RPC
   smoke test.
 
-## R-18 — Kubernetes + Helm feasibility
+## R-18: Kubernetes + Helm feasibility
 
 - **Question**: Can a multi-node Portaldot network be deployed to K8s/Helm?
 - **Source**: `kubectl cluster-info`, `helm list`, `which kind k3d minikube`.
@@ -390,7 +390,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   **No cluster is currently reachable** (kubectl → connection refused on
   localhost:8080). `minikube` IS installed (`/usr/local/bin/minikube`);
   Docker daemon available (minikube docker driver path exists).
-- **Status**: UNVERIFIED — not blocked: all tooling present, cluster startup
+- **Status**: UNVERIFIED: not blocked: all tooling present, cluster startup
   is a routine step (`minikube start`), but starting persistent infra in
   Phase 0 was out of scope by instruction.
 - **Implications**: P2 path is viable on this machine. Resource risk: 2 vCPU /
@@ -399,7 +399,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Next step**: T-6.3 starts minikube, `helm lint`/`helm install` the chart,
   deploys 2–4 nodes, verifies peering inside the cluster.
 
-## R-19 — Mainnet connectivity
+## R-19: Mainnet connectivity
 
 - **Question**: Is `wss://mainnet.portaldot.io` usable?
 - **Source**: docs Chain Info only.
@@ -411,7 +411,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   as a test network (FR-5). Mainnet read-only support is a possible later task.
 - **Next step**: none scheduled; requires explicit product decision.
 
-## R-20 — macOS/Windows coverage
+## R-20: macOS/Windows coverage
 
 - **Question**: What platforms can run the node?
 - **Source**: docs Chain Info + GitHub API listing.
@@ -421,7 +421,7 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 - **Implications**: Kaizen targets Linux/macOS hosts for local operations;
   documented WSL caveat for Windows.
 
-## R-21 — HTTP JSON-RPC for monitoring (batch/parallel reads, degraded methods)
+## R-21: HTTP JSON-RPC for monitoring (batch/parallel reads, degraded methods)
 
 - **Question**: Can the monitoring loop sample all needed fields over plain
   HTTP JSON-RPC (no WS subscriptions), and how do partial failures behave?
@@ -436,12 +436,12 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
     with `parseInt(x, 16)`; `system_peers` items carry
     `{peerId, bestHash, bestNumber, roles}`.
   - Disabled/absent methods return a JSON-RPC error object
-    (`Method not found`) that is individually tolerated per call — the sample
+    (`Method not found`) that is individually tolerated per call: the sample
     degrades that field to null with a warning instead of failing the whole
     node read. Transport-level failure (connection refused) marks the sample
     `reachable:false`.
   - Digest logs from HTTP `chain_getHeader` come back as SCALE-encoded hex
-    (no metadata decoration) — BABE authorship is therefore read from node
+    (no metadata decoration): BABE authorship is therefore read from node
     logs ("Prepared block for proposing"), not header digests, in tests.
 - **Status**: VERIFIED (method set + degraded behavior exercised live).
 - **Implications**: The monitoring sampler needs no WS per sample; a parallel
@@ -454,14 +454,14 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 
 ---
 
-## R-22 — Fault mechanism feasibility (T-3.1 capability matrix)
+## R-22: Fault mechanism feasibility (T-3.1 capability matrix)
 
 - **Question**: On a single host, which failure mechanisms can Kaizen induce
-  safely and *prove* — pause/resume, peer disconnect, network partition,
-  termination/restart — with what privileges, scope, recovery, and cleanup?
+  safely and *prove*: pause/resume, peer disconnect, network partition,
+  termination/restart: with what privileges, scope, recovery, and cleanup?
 - **Source**: Phase 3A experiments, 2026-10-12, each against a freshly
   created disposable Kaizen-managed network only (`designatedTest === true`
-  verified in the harness before every fault — DEC-008 intact). Harness:
+  verified in the harness before every fault: DEC-008 intact). Harness:
   `test/experiments/t31-spike.mjs` (standalone ESM; imports only built engine
   helpers; argv-only spawns; SIGSTOP-PID registry + firewall/netns/cgroup
   rollback registered on every exit path; emergency cleanup on
@@ -475,15 +475,15 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
 
 | # | Mechanism | Approach | Privileges | Scope | Induced successfully | Evidence (log) | Recovery | Cleanup | Limitations | Status |
 |---|-----------|----------|-----------|-------|----------------------|----------------|----------|---------|-------------|--------|
-| A | Node pause / resume | `SIGSTOP` → `SIGCONT` on the engine-managed node PID | none (same-user signal) | one process; topology untouched | YES — pause: PID alive, RPC answers time out, health `unknown` (2 fails) → `unavailable` ("RPC unreachable for N consecutive checks"); bob kept producing at reduced rate (head 1→3 / 36 s) with finality stalled (2/2 GRANDPA); libp2p connection survived (bob peers 1/1) | `t31-a-full.log` | `SIGCONT`: RPC back <3 s, alice synced 0→4 in 3 s, finality 0→5 in ~20 s, both healthy — no restart needed | no residue | paused process still gets kernel TCP handling, so peers hold it as a live peer ≥45 s; health reaches `unavailable`, never `unhealthy` (distinct signature from D) | VERIFIED |
-| B1 | Peer disconnect via reserved-peer RPC on a normal connection | localhost `system_addReservedPeer` / `system_removeReservedPeer` (`--rpc-methods Auto`) | none (localhost unsafe RPC) | reserved set only | **NO** (negative result, proven): set membership changes apply, the live connection never drops — 60 s / 20 samples, both sides, both runs | `t31-b.log`, `t31-b2.log` | n/a | n/a | bare peer-id argument fails (`2002 MultiaddrParse(InvalidMultiaddr)`; full multiaddr required); this RPC cannot sever a discovery-maintained connection on this build | PARTIALLY VERIFIED (behavior proven; disconnect not induced) |
-| B2 | Peer disconnect on a reservation-bound connection | victim spawned `--reserved-only --reserved-nodes <multiaddr>`; then `system_removeReservedPeer(<peerId>)` on the victim | none beyond spawn config | exactly that link | YES — `system_reservedPeers` `[alice]` → `[]`; victim peers 1→0 at t=0 s; alice stops seeing it by t=3 s; sustained 60 s (victim now rejects the peer: no longer reserved) | `t31-b3.log` | re-add reserved peer or restart | normal | reserved-set filter is by **peer ID, not address** — a reserved peer can reconnect from any reachable address; requires `--reserved-only` at spawn | VERIFIED (conditional on reserved-only config) |
-| C1 | Partition via per-node TCP proxy cut (unprivileged) | socat relay as the victim's only bootnode; kill the socat process group | none | the proxied link | PARTIAL — link severed instantly (0.014 s with `--no-mdns`; `ss` proves the proxied leg existed and died), but full mesh reconverges: ~1 s when mDNS is on, ~15 s via identify-learned direct addresses with `--no-mdns` | `t31-c2.log`, `t31-c3.log`, `t31-c5.log` | restore proxy → reconnect observed | no residue | **not a sustained partition**: peers learn real addresses and redial around the cut; mDNS (default ON for non-dev chains) bypasses bootnode wiring entirely | PARTIALLY VERIFIED (cut proven, sustainability refuted) |
-| C2 | Partition via controlled peer configuration (unprivileged) | victim `--no-mdns --reserved-only --reserved-nodes <proxy-multiaddr>`; cut the proxy | none | victim vs. whole mesh | YES — victim peers → 0 at t=0.006 s and stayed 0 for the full 90 s; unaffected nodes kept their mesh (alice=2, bob+keep; keep=2) | `t31-c4.log` | proxy restored → reconnect within 120 s | no residue | victim must be spawned reserved-only (topology wiring); observed window 90 s (longer windows untested) | VERIFIED |
-| C3 | Partition via static port-scoped iptables (privileged, authorized) | v4-only `--dport/--sport` rules on the victim's ports (loopback-scoped + per-socket ephemeral ports) | sudo (authorized) | one node's ports | PARTIAL — alice dropped bob at 50 s, bob's view hit 0 at 55 s, **reconverged by 85 s**: escape via fresh ephemeral source ports and IPv6 (`[::1]`) — and `-i lo` missed eth0 (`10.0.4.11`) legs | `t31-f2.log`, `t31-f4.log` | rules removed → reconvergence | rules removed, table verified | static port rules cannot predict ephemeral redials; `iptables` is IPv4-only; interface scoping leaks non-loopback routes | PARTIALLY VERIFIED (isolation window proven; sustainability refuted) |
-| C4 | Partition via ip{,6}tables + cgroup process scoping (privileged, authorized) | both families, no interface scoping: `INPUT --dport <p2p>`, `OUTPUT --sport <p2p>`, per-established-socket port seals (from live `ss`), plus `OUTPUT -m conntrack --ctstate NEW -m cgroup --path /t31-*` with the victim moved into that cgroup | sudo (authorized) | exactly one process (any port, any family) | YES — alice dropped bob at 50 s; sustained t=55→145 s: alice={keep}, keep={alice}, **victim peers=0, victim RPC still up**; zero rule-deletion failures | `t31-f6.log` | rules removed → reconverged ≤10 s | firewall (v4+v6) back to byte-identical baseline; cgroup removed (`leftovers: []`) | `--ctdir ORIGINAL` is inert on this backend (do not use); `--pid-owner` unsupported; cgroup path must exist at rule-insert (EINVAL otherwise); moving a LIVE process back to the root cgroup fails EBUSY (kill first) | VERIFIED |
-| C5 | Partition via network namespace + veth (privileged, authorized) | throwaway `ip netns` + veth pair (`10.77.53.1/24` ↔ `10.77.53.2`); victim spawned inside; cut = host-side `ip link set … down` | sudo (authorized) | one link / one node (dedicated IP) | YES — alice lost the ns-node at 55 s; **ns peers=0 with ns RPC still up and ns head frozen at 1 while alice's head advanced to 16**; `ss` showed zero host legs to the ns node; alice↔bob intact throughout (bob=1) | `t31-g.log` | link up → reconnected ≤5 s (ns peers=2) | netns list empty, veth gone (verified) | node runs as root inside the ns (root-owned data needs `sudo rm`); peer-drop latency followed the ~50 s ping timeout, not instant carrier-down | VERIFIED |
-| D | Terminate + restart via the engine | `engine.networks.stopNode` (SIGTERM→SIGKILL) → `startNode` | none (engine path) | one node | YES — `alive=false`, RPC down, health **`unhealthy` "process is not running (status: stopped)"** (distinct from pause's `unavailable`); peers 0/1 stayed healthy inside the startup grace | `t31-d.log` | `startNode` → new PID (21174 vs 20731), peers reconnected <1 s, chain 0→3 → finality #1; final heads 10→12, both healthy | engine-managed, no residue | none observed; identity/genesis preserved across restart | VERIFIED |
+| A | Node pause / resume | `SIGSTOP` → `SIGCONT` on the engine-managed node PID | none (same-user signal) | one process; topology untouched | YES: pause: PID alive, RPC answers time out, health `unknown` (2 fails) → `unavailable` ("RPC unreachable for N consecutive checks"); bob kept producing at reduced rate (head 1→3 / 36 s) with finality stalled (2/2 GRANDPA); libp2p connection survived (bob peers 1/1) | `t31-a-full.log` | `SIGCONT`: RPC back <3 s, alice synced 0→4 in 3 s, finality 0→5 in ~20 s, both healthy: no restart needed | no residue | paused process still gets kernel TCP handling, so peers hold it as a live peer ≥45 s; health reaches `unavailable`, never `unhealthy` (distinct signature from D) | VERIFIED |
+| B1 | Peer disconnect via reserved-peer RPC on a normal connection | localhost `system_addReservedPeer` / `system_removeReservedPeer` (`--rpc-methods Auto`) | none (localhost unsafe RPC) | reserved set only | **NO** (negative result, proven): set membership changes apply, the live connection never drops: 60 s / 20 samples, both sides, both runs | `t31-b.log`, `t31-b2.log` | n/a | n/a | bare peer-id argument fails (`2002 MultiaddrParse(InvalidMultiaddr)`; full multiaddr required); this RPC cannot sever a discovery-maintained connection on this build | PARTIALLY VERIFIED (behavior proven; disconnect not induced) |
+| B2 | Peer disconnect on a reservation-bound connection | victim spawned `--reserved-only --reserved-nodes <multiaddr>`; then `system_removeReservedPeer(<peerId>)` on the victim | none beyond spawn config | exactly that link | YES: `system_reservedPeers` `[alice]` → `[]`; victim peers 1→0 at t=0 s; alice stops seeing it by t=3 s; sustained 60 s (victim now rejects the peer: no longer reserved) | `t31-b3.log` | re-add reserved peer or restart | normal | reserved-set filter is by **peer ID, not address**: a reserved peer can reconnect from any reachable address; requires `--reserved-only` at spawn | VERIFIED (conditional on reserved-only config) |
+| C1 | Partition via per-node TCP proxy cut (unprivileged) | socat relay as the victim's only bootnode; kill the socat process group | none | the proxied link | PARTIAL: link severed instantly (0.014 s with `--no-mdns`; `ss` proves the proxied leg existed and died), but full mesh reconverges: ~1 s when mDNS is on, ~15 s via identify-learned direct addresses with `--no-mdns` | `t31-c2.log`, `t31-c3.log`, `t31-c5.log` | restore proxy → reconnect observed | no residue | **not a sustained partition**: peers learn real addresses and redial around the cut; mDNS (default ON for non-dev chains) bypasses bootnode wiring entirely | PARTIALLY VERIFIED (cut proven, sustainability refuted) |
+| C2 | Partition via controlled peer configuration (unprivileged) | victim `--no-mdns --reserved-only --reserved-nodes <proxy-multiaddr>`; cut the proxy | none | victim vs. whole mesh | YES: victim peers → 0 at t=0.006 s and stayed 0 for the full 90 s; unaffected nodes kept their mesh (alice=2, bob+keep; keep=2) | `t31-c4.log` | proxy restored → reconnect within 120 s | no residue | victim must be spawned reserved-only (topology wiring); observed window 90 s (longer windows untested) | VERIFIED |
+| C3 | Partition via static port-scoped iptables (privileged, authorized) | v4-only `--dport/--sport` rules on the victim's ports (loopback-scoped + per-socket ephemeral ports) | sudo (authorized) | one node's ports | PARTIAL: alice dropped bob at 50 s, bob's view hit 0 at 55 s, **reconverged by 85 s**: escape via fresh ephemeral source ports and IPv6 (`[::1]`): and `-i lo` missed eth0 (`10.0.4.11`) legs | `t31-f2.log`, `t31-f4.log` | rules removed → reconvergence | rules removed, table verified | static port rules cannot predict ephemeral redials; `iptables` is IPv4-only; interface scoping leaks non-loopback routes | PARTIALLY VERIFIED (isolation window proven; sustainability refuted) |
+| C4 | Partition via ip{,6}tables + cgroup process scoping (privileged, authorized) | both families, no interface scoping: `INPUT --dport <p2p>`, `OUTPUT --sport <p2p>`, per-established-socket port seals (from live `ss`), plus `OUTPUT -m conntrack --ctstate NEW -m cgroup --path /t31-*` with the victim moved into that cgroup | sudo (authorized) | exactly one process (any port, any family) | YES: alice dropped bob at 50 s; sustained t=55→145 s: alice={keep}, keep={alice}, **victim peers=0, victim RPC still up**; zero rule-deletion failures | `t31-f6.log` | rules removed → reconverged ≤10 s | firewall (v4+v6) back to byte-identical baseline; cgroup removed (`leftovers: []`) | `--ctdir ORIGINAL` is inert on this backend (do not use); `--pid-owner` unsupported; cgroup path must exist at rule-insert (EINVAL otherwise); moving a LIVE process back to the root cgroup fails EBUSY (kill first) | VERIFIED |
+| C5 | Partition via network namespace + veth (privileged, authorized) | throwaway `ip netns` + veth pair (`10.77.53.1/24` ↔ `10.77.53.2`); victim spawned inside; cut = host-side `ip link set … down` | sudo (authorized) | one link / one node (dedicated IP) | YES: alice lost the ns-node at 55 s; **ns peers=0 with ns RPC still up and ns head frozen at 1 while alice's head advanced to 16**; `ss` showed zero host legs to the ns node; alice↔bob intact throughout (bob=1) | `t31-g.log` | link up → reconnected ≤5 s (ns peers=2) | netns list empty, veth gone (verified) | node runs as root inside the ns (root-owned data needs `sudo rm`); peer-drop latency followed the ~50 s ping timeout, not instant carrier-down | VERIFIED |
+| D | Terminate + restart via the engine | `engine.networks.stopNode` (SIGTERM→SIGKILL) → `startNode` | none (engine path) | one node | YES: `alive=false`, RPC down, health **`unhealthy` "process is not running (status: stopped)"** (distinct from pause's `unavailable`); peers 0/1 stayed healthy inside the startup grace | `t31-d.log` | `startNode` → new PID (21174 vs 20731), peers reconnected <1 s, chain 0→3 → finality #1; final heads 10→12, both healthy | engine-managed, no residue | none observed; identity/genesis preserved across restart | VERIFIED |
 
 ### Environment facts any injector must respect (discovered live)
 
@@ -491,9 +491,9 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   auto-implied by `--dev`). Without it, bootnode/proxy wiring is bypassed
   and proxy cuts are invisible (C1).
 - **`--reserved-only` disables automatic discovery**; the reserved filter is
-  by **peer ID**, so a reserved peer can be reached from any address — which
+  by **peer ID**, so a reserved peer can be reached from any address: which
   is why C2 still depended on the victim being unable to dial anything else.
-- **Outbound p2p dials use ephemeral local ports**, not the listen port —
+- **Outbound p2p dials use ephemeral local ports**, not the listen port :
   static port rules cannot predict redials (C3).
 - **Dual-stack and multi-homed**: p2p ran over `127.0.0.1`, `[::1]`, and
   `10.0.4.11` (eth0) in the same run. `iptables` is IPv4-only; `-i lo`
@@ -503,9 +503,9 @@ Reproduce: script archived at Phase 0 (`multinode-test.sh`), summarized:
   silently matches nothing (micro-test: counter 0, bytes kept flowing);
   `--ctstate NEW` + `-m cgroup --path` **works** (path must exist at insert
   else EINVAL); deletion requires the exact `-D <chain> <rule-spec>` form
-  (wrong form fails silently and leaks rules — hit and fixed in T-3.1).
+  (wrong form fails silently and leaks rules: hit and fixed in T-3.1).
 - **sudo**: passwordless here; `unshare --net` works; `ip netns` + veth
-  work; a live process cannot be moved back to the root cgroup (EBUSY —
+  work; a live process cannot be moved back to the root cgroup (EBUSY :
   kill it first, then `rmdir`).
 - **RPC**: `system_localPeerId` (not `system_peerId`);
   `system_addReservedPeer`/`system_removeReservedPeer`/`system_reservedPeers`
@@ -526,7 +526,7 @@ KAIZEN_TEST_BIN_DIR=/tmp/opencode/bin TMPDIR=/tmp/opencode \
 Privileged variants (`c-iptables*`, `c-netns`) require prior operator
 authorization (DEC-018) and verify firewall/netns state before and after.
 
-- **Status**: PARTIALLY VERIFIED overall — A, B2, C2, C4, C5, D VERIFIED;
+- **Status**: PARTIALLY VERIFIED overall: A, B2, C2, C4, C5, D VERIFIED;
   B1, C1, C3 PARTIALLY VERIFIED (negative results proven by observation).
 - **Implications for T-3.2 (FailureInjector)**: unprivileged defaults are
   SIGSTOP/SIGCONT (pause), engine stop/start (terminate), and
@@ -538,7 +538,7 @@ authorization (DEC-018) and verify firewall/netns state before and after.
   host-global firewall changes; every fault pre-checks `designatedTest`.
 - **Uncertainties**: windows >90 s (long-horizon reconvergence) untested;
   partial-authority finality under isolation not measured here (RSK-12
-  remains open — A only shows finality stalling with 2/2 authorities
+  remains open: A only shows finality stalling with 2/2 authorities
   pause-split); cgroup/iptables semantics on non-nft backends or other
   kernels untested; monitor-health transitions during partition observed
   only through direct RPC reads, not asserted beyond them.
@@ -550,14 +550,14 @@ authorization (DEC-018) and verify firewall/netns state before and after.
 
 Implemented in `packages/engine/src/fault/` and re-verified through the
 injector's own lifecycle against a real `portaldot_dev` two-node network
-(`test/integration/faults.int.test.ts`, live run 2026-10-12 — dry-run first,
+(`test/integration/faults.int.test.ts`, live run 2026-10-12: dry-run first,
 then execution with the TEST's own RPC polling as the independent
 observation):
 
 | # | Mechanism | Injector status | Live evidence (T-3.2) |
 |---|-----------|-----------------|------------------------|
-| A | pause (SIGSTOP/SIGCONT) | **IMPLEMENTED — VERIFIED**: baseline+effect+recovery all independently observed; same pid before/after; chain resumes; distinct claims (applied/observed/removed/recovered) | pause run: victim RPC unreachable for ≥5 s observed by the test's own 500 ms polling, reachable again, pid unchanged, `chain_getHeader` advanced past the pre-fault head; `result.outcome=verified` |
-| D | terminate (engine stop/start) | **IMPLEMENTED — VERIFIED**: exit proven (old pid dead + RPC down), restore proven with a NEW pid, peers reconverged on both nodes, chain resumed | terminate run: old pid dead, new pid serving RPC, `system_health.peers>=1` on both nodes, head advanced |
+| A | pause (SIGSTOP/SIGCONT) | **IMPLEMENTED: VERIFIED**: baseline+effect+recovery all independently observed; same pid before/after; chain resumes; distinct claims (applied/observed/removed/recovered) | pause run: victim RPC unreachable for ≥5 s observed by the test's own 500 ms polling, reachable again, pid unchanged, `chain_getHeader` advanced past the pre-fault head; `result.outcome=verified` |
+| D | terminate (engine stop/start) | **IMPLEMENTED: VERIFIED**: exit proven (old pid dead + RPC down), restore proven with a NEW pid, peers reconverged on both nodes, chain resumed | terminate run: old pid dead, new pid serving RPC, `system_health.peers>=1` on both nodes, head advanced |
 | B2 | peer-disconnect (reserved-peer RPC) | **BLOCKED (registered adapter, typed unsupported result)**: no engine topology produces `--reserved-only` nodes and spawn mode is not persisted on NodeConfig, so the reservation-bound precondition cannot be verified for any managed target; unblock path names the required topology wiring + `t31-b3.log` | live REST `POST …/execute` → HTTP 409 `FAULT_NOT_SUPPORTED`; victim unaffected |
 | C2/C4/C5 | partition | **BLOCKED (registered adapter, typed unsupported result)**: unprivileged route needs the same reserved-only wiring; privileged route needs DEC-018 operator authorization + a privileged execution path that T-2/T-3.2 deliberately does not implement | live REST execute → 409 `FAULT_NOT_SUPPORTED`; no firewall/netns state touched |
 
@@ -571,11 +571,11 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
 
 ---
 
-## R-23 — Portaldot V3 public endpoints: connectivity and identity (T-8.1)
+## R-23: Portaldot V3 public endpoints: connectivity and identity (T-8.1)
 
 - **Question**: Are the official Portaldot V3 endpoints reachable from this
-  environment, and what do they verifiably answer — chain identity, health,
-  height, EVM chain id — without assuming anything from generic Substrate
+  environment, and what do they verifiably answer: chain identity, health,
+  height, EVM chain id: without assuming anything from generic Substrate
   docs?
 - **Source**: T-8.1 live probe, 2026-10-19 ~17:51 UTC, via the implemented
   probe itself: `KAIZEN_TEST_V3=1 npx vitest run --config
@@ -586,16 +586,16 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
   `0x190f1ca9`) and a Node `ws` script against the Substrate endpoint
   (`system_chain`/`system_health`/`chain_getHeader`).
 - **Evidence (verbatim observations, single probe cycle 2026-10-19T17:51Z)**:
-  - **Substrate WS** `wss://test-node-v3.portaldot.dev` — `ok` (3130 ms):
+  - **Substrate WS** `wss://test-node-v3.portaldot.dev`: `ok` (3130 ms):
     `system_chain` = **"PortaldotV3 Test"**; `system_health` =
     **{peers: 2, isSyncing: false, shouldHavePeers: false}**; best header
     **#106135** (hash `0x30c7b266…08cab66`).
-  - **EVM JSON-RPC** `https://test-evm-rpc-v3.portaldot.dev` — `ok`
+  - **EVM JSON-RPC** `https://test-evm-rpc-v3.portaldot.dev`: `ok`
     (1553 ms): `eth_chainId` = `0x190f1ca9` = **420420777** (matches the
-    supplied expectation exactly); `eth_blockNumber` = **#106135** — the
+    supplied expectation exactly); `eth_blockNumber` = **#106135**: the
     SAME height as the Substrate head, corroborating one chain exposed via
     two protocols; `web3_clientVersion` is supported and returned
-    **"eth-rpc/main-fddd431/x86_64-unknown-linux-gnu/rustc1.98.0"** — a
+    **"eth-rpc/main-fddd431/x86_64-unknown-linux-gnu/rustc1.98.0"**: a
     Frontier-style `eth-rpc`, not a geth client.
   - Height advances over time (manual pre-check at 17:27 UTC read
     #105907), i.e. the chain is live, not a static fixture.
@@ -613,11 +613,11 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
   contract deployment) re-runs `KAIZEN_TEST_V3=1` and must treat a
   chain-id mismatch as a hard stop, not a warning.
 
-## R-24 — Explorer public HTTP response: what is verifiable (T-8.1)
+## R-24: Explorer public HTTP response: what is verifiable (T-8.1)
 
 - **Question**: What can honestly be verified about
   `https://node-console.portaldot.dev` without a browser scraper or a new
-  dependency — and what cannot?
+  dependency: and what cannot?
 - **Source**: manual `curl` inspection 2026-10-19 17:28 UTC, plus the
   probe's bounded availability check (fetch GET, first 2 KiB of the body,
   17:51 UTC).
@@ -627,10 +627,10 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
   `last-modified: 2026-10-16`. The page is an HTML SPA (loads
   `env-config.js`); it exposes **no Substrate WS or EVM JSON-RPC
   protocol** at this URL.
-- **Status**: **PARTIALLY VERIFIED** — availability, status, content type,
+- **Status**: **PARTIALLY VERIFIED**: availability, status, content type,
   and document identity are verified; the explorer's actual data views
   (accounts, blocks, contracts rendered by its JS bundle) are NOT verified
-  (that would require browser/JS execution — deliberately out of T-8.1
+  (that would require browser/JS execution: deliberately out of T-8.1
   scope: no scraper, no new dependency).
 - **Implications**: the probe's explorer check is availability-only and
   says so in its typed result (`warnings` field: "availability check
@@ -669,6 +669,6 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
 | R-19 | Mainnet endpoint | UNVERIFIED (out of scope) |
 | R-20 | Platform coverage (macOS/WSL) | VERIFIED |
 | R-21 | HTTP JSON-RPC for monitoring | VERIFIED (Phase 2A) |
-| R-22 | Fault mechanisms: pause/disconnect/partition/terminate (T-3.1) | PARTIALLY VERIFIED — A/B2/C2/C4/C5/D VERIFIED; B1/C1/C3 negative results proven (see matrix). T-3.2: pause + terminate IMPLEMENTED and re-verified live through the injector; peer-disconnect + partition registered as typed-blocked (see T-3.2 status table) |
-| R-23 | Portaldot V3 public endpoints: connectivity & identity (T-8.1) | VERIFIED (2026-10-19) — Substrate WS chain "PortaldotV3 Test", health peers 2 / not syncing, best #106135; EVM chain id 420420777 matches config, same height via both surfaces, client `eth-rpc/main-fddd431…`; point-in-time, single host |
-| R-24 | Explorer public HTTP response (T-8.1) | PARTIALLY VERIFIED — HTTP 200 / text/html / title "Portaldot Node Console" verified (availability-only check); SPA data views not verified (no browser/JS execution; out of scope) |
+| R-22 | Fault mechanisms: pause/disconnect/partition/terminate (T-3.1) | PARTIALLY VERIFIED: A/B2/C2/C4/C5/D VERIFIED; B1/C1/C3 negative results proven (see matrix). T-3.2: pause + terminate IMPLEMENTED and re-verified live through the injector; peer-disconnect + partition registered as typed-blocked (see T-3.2 status table) |
+| R-23 | Portaldot V3 public endpoints: connectivity & identity (T-8.1) | VERIFIED (2026-10-19): Substrate WS chain "PortaldotV3 Test", health peers 2 / not syncing, best #106135; EVM chain id 420420777 matches config, same height via both surfaces, client `eth-rpc/main-fddd431…`; point-in-time, single host |
+| R-24 | Explorer public HTTP response (T-8.1) | PARTIALLY VERIFIED: HTTP 200 / text/html / title "Portaldot Node Console" verified (availability-only check); SPA data views not verified (no browser/JS execution; out of scope) |

@@ -19,19 +19,27 @@
  * (`signer.dev = true`) — they prove integrity, not operator identity.
  */
 
-import { cryptoWaitReady, decodeAddress, signatureVerify } from '@polkadot/util-crypto';
-import { KaizenError } from '../errors';
-import type { ScenarioRunRecord } from '../scenario/run-types';
-import { isTerminalScenarioRunState } from '../scenario/run-types';
-import { canonicalJson, computeRunHash, sha256Hex } from '../v3/anchor/canonical';
-import type { DrillRecord } from './drill-record';
-import type { ChainEvidence } from './evidence';
-import type { ResilienceSigner, ResilienceSignerSource } from './signer';
+import {
+  cryptoWaitReady,
+  decodeAddress,
+  signatureVerify,
+} from "@polkadot/util-crypto";
+import { KaizenError } from "../errors";
+import type { ScenarioRunRecord } from "../scenario/run-types";
+import { isTerminalScenarioRunState } from "../scenario/run-types";
+import {
+  canonicalJson,
+  computeRunHash,
+  sha256Hex,
+} from "../v3/anchor/canonical";
+import type { DrillRecord } from "./drill-record";
+import type { ChainEvidence } from "./evidence";
+import type { ResilienceSigner, ResilienceSignerSource } from "./signer";
 
 export const KAIZEN_CERTIFICATE_VERSION = 1 as const;
 
 function u8aToHex(bytes: Uint8Array): string {
-  return `0x${Buffer.from(bytes).toString('hex')}`;
+  return `0x${Buffer.from(bytes).toString("hex")}`;
 }
 
 export interface CertificateSignature {
@@ -39,7 +47,7 @@ export interface CertificateSignature {
   address: string;
   /** 0x-prefixed 32-byte sr25519 public key. */
   publicKey: string;
-  scheme: 'sr25519';
+  scheme: "sr25519";
   /** Where the key came from; `dev` = well-known public test key. */
   source: ResilienceSignerSource;
   dev: boolean;
@@ -62,7 +70,11 @@ export interface ResilienceCertificate {
   signedAt: string;
 }
 
-export function certificateDocument(run: ScenarioRunRecord, chain: ChainEvidence, drill?: DrillRecord): string {
+export function certificateDocument(
+  run: ScenarioRunRecord,
+  chain: ChainEvidence,
+  drill?: DrillRecord,
+): string {
   return canonicalJson({
     kaizenCertificate: KAIZEN_CERTIFICATE_VERSION,
     runHash: computeRunHash(run),
@@ -72,7 +84,11 @@ export function certificateDocument(run: ScenarioRunRecord, chain: ChainEvidence
   });
 }
 
-export function computeCertificateFingerprint(run: ScenarioRunRecord, chain: ChainEvidence, drill?: DrillRecord): string {
+export function computeCertificateFingerprint(
+  run: ScenarioRunRecord,
+  chain: ChainEvidence,
+  drill?: DrillRecord,
+): string {
   return sha256Hex(certificateDocument(run, chain, drill));
 }
 
@@ -89,14 +105,17 @@ export async function issueCertificate(input: {
   now?: () => Date;
 }): Promise<ResilienceCertificate> {
   const { run, chain, signer, drill } = input;
-  if (!isTerminalScenarioRunState(run.state) || run.state === 'rejected') {
+  if (!isTerminalScenarioRunState(run.state) || run.state === "rejected") {
     throw new KaizenError(
-      'RESILIENCE_NOT_CERTIFIABLE',
+      "RESILIENCE_NOT_CERTIFIABLE",
       `run ${run.id} is ${run.state}; only finished, executed runs can be certified`,
     );
   }
   if (chain.networkId !== run.networkId) {
-    throw new KaizenError('RESILIENCE_NOT_CERTIFIABLE', 'chain evidence belongs to a different network than the run');
+    throw new KaizenError(
+      "RESILIENCE_NOT_CERTIFIABLE",
+      "chain evidence belongs to a different network than the run",
+    );
   }
   await cryptoWaitReady();
   const fingerprint = computeCertificateFingerprint(run, chain, drill);
@@ -113,7 +132,7 @@ export async function issueCertificate(input: {
     signature: {
       address: signer.address,
       publicKey: u8aToHex(signer.pair.publicKey),
-      scheme: 'sr25519',
+      scheme: "sr25519",
       source: signer.source,
       dev: signer.dev,
       signature,
@@ -128,6 +147,8 @@ export interface SignatureCheck {
   signatureValid: boolean;
   /** Address ↔ public key consistency (the address is display-only). */
   addressMatchesKey: boolean;
+  /** Top-level metadata agrees with the supplied run and chain evidence. */
+  metadataMatches: boolean;
   dev: boolean;
 }
 
@@ -142,6 +163,12 @@ export async function checkCertificateSignature(
 ): Promise<SignatureCheck> {
   await cryptoWaitReady();
   const recomputed = computeCertificateFingerprint(run, cert.chain, cert.drill);
+  const metadataMatches =
+    cert.runId === run.id &&
+    cert.runHash === computeRunHash(run) &&
+    cert.validatorId === cert.chain.validatorId &&
+    cert.networkId === run.networkId &&
+    cert.networkId === cert.chain.networkId;
   let signatureValid = false;
   try {
     signatureValid = signatureVerify(
@@ -154,15 +181,18 @@ export async function checkCertificateSignature(
   }
   let addressMatchesKey = false;
   try {
-    addressMatchesKey = u8aToHex(decodeAddress(cert.signature.address)) === cert.signature.publicKey;
+    addressMatchesKey =
+      u8aToHex(decodeAddress(cert.signature.address)) ===
+      cert.signature.publicKey;
   } catch {
     addressMatchesKey = false;
   }
   return {
-    fingerprintMatches: recomputed === cert.fingerprint && cert.runId === run.id,
+    fingerprintMatches: recomputed === cert.fingerprint && metadataMatches,
     recomputedFingerprint: recomputed,
     signatureValid,
     addressMatchesKey,
+    metadataMatches,
     dev: cert.signature.dev,
   };
 }

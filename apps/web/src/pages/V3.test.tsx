@@ -49,7 +49,7 @@ beforeEach(() => {
   api.v3Status.mockResolvedValue({
     ok: true,
     status: {
-      signer: { configured: true, address: '5HSwNUrjU8VqBfdjJdmGdEYig96V1uR6qySiKTZF6eoBd32o', evmAddress: null, freeBalance: '315000000000000', tokenSymbol: 'tPOT', tokenDecimals: 14 },
+      signer: { configured: true, address: '5HBnAqniYhyupDT1ccsTSRkdy3EbCAaZC6ii9XFon8WQwEaR', evmAddress: null, freeBalance: '315000000000000', tokenSymbol: 'tPOT', tokenDecimals: 14 },
       registryAddress: '0x08fdadd1ebe16234c03b723255cc12fd98a5ef07',
       registrySource: 'deployment',
       chainName: 'PortaldotV3 Test',

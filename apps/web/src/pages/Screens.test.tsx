@@ -143,7 +143,7 @@ describe('Networks', () => {
     renderConsole(<Networks />, { route: '/networks' });
     const table = await screen.findByRole('table', { name: 'Networks' });
     expect(within(table).getByText('demo')).toBeInTheDocument();
-    expect(within(table).getByText('two-node')).toBeInTheDocument();
+    expect(within(table).getByText('two-node · designated test network')).toBeInTheDocument();
     expect(within(table).getByText('running')).toBeInTheDocument();
   });
 

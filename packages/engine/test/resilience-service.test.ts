@@ -233,4 +233,24 @@ describe('ResilienceService certify / score / verify', () => {
     expect(off.chain.reason).toMatch(/network offline/);
     expect(() => svc.getCertificate('0xnope')).toThrow();
   });
+
+  it.each([
+    ['validatorId', { validatorId: 'alice' }],
+    ['networkId', { networkId: 'net_2' }],
+    ['runHash', { runHash: `0x${'00'.repeat(32)}` }],
+    ['run id', { runId: 'other-run' }],
+  ] as const)('excludes a score certificate with tampered top-level %s metadata', async (_field, tampering) => {
+    const { svc, store } = await captured();
+    const cert = await svc.certifyRun('run-1', { allowDevKey: true });
+    const database = (store as unknown as {
+      db: { prepare(sql: string): { run(...args: unknown[]): unknown } };
+    }).db;
+    database.prepare('UPDATE resilience_certificates SET certificate = ? WHERE fingerprint = ?').run(
+      JSON.stringify({ ...cert, ...tampering }),
+      cert.fingerprint,
+    );
+    const score = await svc.score('bob', new Date(cert.signedAt));
+    expect(score.runs).toBe(0);
+    expect(score.excluded).toEqual([cert.fingerprint]);
+  });
 });

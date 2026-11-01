@@ -147,6 +147,7 @@ export function Create() {
     <div className="split">
       <div>
         <h1>Create a network</h1>
+        <p className="sub">Choose a preset or configure nodes, then launch a real local network.</p>
         <label className="field-l" htmlFor="nn">
           Network name
         </label>

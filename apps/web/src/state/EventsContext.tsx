@@ -12,6 +12,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import type { JSX, ReactNode } from 'react';
 import { KaizenEventStream, type EventStreamStatus } from '../api/events';
 import type { KaizenEventName } from '../api/types';
+import { REPLAY } from '../lib/mode';
 
 export interface StoredEvent {
   /** Monotonic per-session sequence (rendering key; also dedupes StrictMode double-renders). */
@@ -43,14 +44,20 @@ export function EventsProvider({
   stream?: KaizenEventStream;
 }): JSX.Element {
   const streamRef = useRef<KaizenEventStream | null>(stream ?? null);
-  if (!streamRef.current) streamRef.current = new KaizenEventStream();
+  // Replay mode has no engine and therefore no live event stream: stay idle
+  // ('closed') instead of reconnecting forever to a socket that is not there.
+  if (!streamRef.current && !(REPLAY && !stream)) streamRef.current = new KaizenEventStream();
   const [events, setEvents] = useState<StoredEvent[]>([]);
   const [status, setStatus] = useState<EventStreamStatus>('connecting');
   const [generation, setGeneration] = useState(0);
   const seqRef = useRef(0);
 
   useEffect(() => {
-    const s = streamRef.current!;
+    const s = streamRef.current;
+    if (!s) {
+      setStatus('closed');
+      return undefined;
+    }
     const offEvent = s.subscribe(({ name, payload }) => {
       const p = (payload ?? {}) as Record<string, unknown>;
       seqRef.current += 1;

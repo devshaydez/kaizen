@@ -1,19 +1,13 @@
 # Kaizen
+Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.
 
-**Monitors tell you a validator is up. Kaizen proves it survives going down.**
+Kaizen is a disaster-simulation engine that breaks Portaldot validators on purpose and proves on-chain that they recover.
 
-Kaizen runs fault drills against Portaldot validators — pause a node, kill
-it, bring it back — and turns each drill into a **signed, chain-bound
-resilience certificate** that anyone can re-check against the chain, plus a
-0–100 **resilience score** per validator. Underneath is a full node-ops
-platform: real multi-node `portaldot_dev` networks, live monitoring, a gated
-Failure Lab with replayable scenarios, and run anchoring on the **Portaldot
-V3 test network** — from a web console and a CLI that share one engine.
+Kaizen is a proof-of-resilience platform for Portaldot validators. It runs controlled drills against disposable test networks, records the observed operations and evidence, and supports independently verifiable certificates anchored to the Portaldot V3 test network.
 
-## Proof-of-Resilience: the trustless drill model
+[![Resilience](https://kaizen-live.vercel.app/api/badge)](https://kaizen-live.vercel.app)
 
-The goal is a score that does not rest on the operator's word. Three
-pillars, each marked by what has actually been verified:
+## The problem
 
 | Pillar | What it means | Status |
 |---|---|---|
@@ -21,12 +15,7 @@ pillars, each marked by what has actually been verified:
 | **2. Recovery is proven from what the chain records** | Recovery = GRANDPA finality advancing past where it stalled, read from block hashes any verifier can re-fetch; BABE authorship by the validator's own keys before/after the fault is the next step. Operator-measured timings are weighted least. | **Partly implemented** — finalized/best heads (number + hash) are captured before, during and after the fault and re-checked against the chain by `kaizen verify-certificate`; recovery is only declared when finality advances. **Verified live** on x86_64 CI ([run 40042905143](https://github.com/Shaydez-Defi/kaizen/actions/runs/40042905143)): pause drill on a real two-node `portaldot_dev` network, 11 captured hashes re-fetched → `verified`; network stopped → `unverifiable: network offline` ([evidence](docs/evidence/resilience/)). BABE authorship and evidence-class weighting (self-reports weighted least): **roadmap** (§7.2–7.3) — the v1 score still gives the measured recovery time the largest weight. |
 | **3. A signed certificate under an open attestation spec** | SHA-256 fingerprint over canonical JSON of the run record + chain evidence, signed with the operator's sr25519 key; open score formula with worked examples. | **Implemented** — `kaizen certify` / `score` / `verify-certificate`, `/api/resilience/*`, spec in [docs/RESILIENCE_SCORE.md](docs/RESILIENCE_SCORE.md); unit-tested (engine 50, CLI 3, API 4) and exercised live in the same CI run (dev-key certificate). `KaizenResilienceRegistry` is **deployed on the V3 test network** at `0x8ec2b52a5e407926309f983f6e7d019d66da764a` (block 167466) and holds that CI certificate with its v1 score, read back with `getScore` → 35/100, 1 certificate ([evidence](docs/evidence/v3-resilience-registry-v1.json)). The certificate is DEV-key signed and came from a local CI network, not from a drill on V3. |
 
-```
-drill (pause / terminate) ──► chain evidence (heads + hashes, before/during/after)
-        └──► certificate = sha256(canonical{run, runHash, evidence}) + sr25519 signature
-                 └──► verify: recompute + check signature + re-fetch block hashes
-                 └──► score: 0–100 per validator (docs/RESILIENCE_SCORE.md)
-```
+## How it works
 
 ```bash
 KAIZEN_RESILIENCE_EVIDENCE=1 kaizen run execute <scenarioId> --network <net>   # capture
@@ -206,90 +195,42 @@ deploy the resilience registry (195.2 code deposit + 66.2 storage deposit +
 
 ## Quickstart
 
-Prerequisites: Node.js 24+, npm 11+, Linux x86_64 or macOS (upstream ships no
-linux-arm64 node binary — RSK-31), ~1 GiB RAM per running node.
+Requirements: Node.js 24 or later, npm, and a supported Linux x86_64 or macOS host. The first setup requires network access to download the upstream Portaldot node binary. Each running node requires approximately 1 GiB of free RAM.
+
+From a clean clone, run:
 
 ```bash
-git clone https://github.com/Shaydez-Defi/kaizen
+git clone https://github.com/Shaydez-Defi/kaizen.git
 cd kaizen
-npm install
-npm run build                       # engine → cli → api → web
-npx kaizen up                       # setup binary if missing → create "kaizen-local"
-                                    # (four-validator) → start, health-gated → print endpoints
+npm ci
+npm run build
+npm test
 ```
 
-`kaizen up` only orchestrates existing engine calls; it reuses the network if
-it already exists, `--no-setup` refuses to download, `--name`/`--preset`
-choose another network, and `--target docker|kubernetes` is refused as
-Phase 6 (not built). The step-by-step equivalent is
-`kaizen setup` → `kaizen network create … --preset four-validator` →
-`kaizen network start …`.
+The workspace scripts and runtime packages are specified in `package.json` and the package manifests. `npm install` installs the workspace dependencies, `npm run build` builds the engine, CLI, API, and web application, and `npm test` runs the unit suite. A real-node integration suite is separate and opt-in; it requires `portaldot_dev` and `KAIZEN_TEST_LIVE=1` as described in [Testing](docs/TESTING.md). The hosted console provides the public live view at https://kaizen-live.vercel.app.
 
-Run the console:
+## Evidence and on-chain anchoring
 
-```bash
-node apps/api/dist/index.js         # API + WS on http://127.0.0.1:4310
-npm run dev -w @kaizen/web          # console on http://127.0.0.1:5173 (proxies /api)
-```
+The drill-live workflow runs real resilience drills in CI every three hours. It records evidence for each run and anchors the resulting evidence through the configured Portaldot V3 test-network flow. The published live console at https://kaizen-live.vercel.app exposes the available live evidence. The configured drill signer is `5HBnAqniYhyupDT1ccsTSRkdy3EbCAaZC6ii9XFon8WQwEaR`.
 
-Open the console → **Overview** (or **Create network**) → watch the live topology →
-**Failure Lab**: pause a node, watch the live fault log and verified recovery
-→ **Scenarios**: run or replay a drill → **Portaldot V3**: anchor the finished
-run and verify it.
+An anchor or drill is reported only when its corresponding operation and evidence support that claim. See [the architecture](docs/ARCHITECTURE.md), [the technical research record](docs/TECHNICAL_RESEARCH.md), and [the testing evidence](docs/TESTING.md) for scope and verification boundaries.
 
-Or from the CLI (same engine):
+## Roadmap
 
-```bash
-K=node packages/cli/dist/index.js
-$K network create demo --preset two-node
-$K network start demo
-$K network monitor demo
-$K scenario create my-drill.json        # see docs/evidence/runs/*.json → snapshot for a valid shape
-$K run execute <scenarioId> -n demo
-$K v3 probe                             # read-only
-$K v3 status                            # signer address + balance, registry in effect
-KAIZEN_V3_SIGNER_SURI='…' $K v3 anchor <runId> --method remark
-$K v3 verify <anchorId>
-$K network stop demo
-```
-
-Writes to V3 need a funded test account in `KAIZEN_V3_SIGNER_SURI`
-(never committed, never passed over HTTP). Runtime state lives in
-`./.kaizen/` (gitignored) or `$KAIZEN_DATA_DIR`.
-
-What was verified, where: build/typecheck/lint/unit suite (379 tests) on
-2026-10-21; API start + V3 probe/status/verify live on 2026-10-21; node
-lifecycle and Failure Lab flows live in earlier phases (commands and results
-in [docs/TESTING.md](docs/TESTING.md)).
-
-## Development
-
-```bash
-npm test                            # unit + jsdom tests (no network, no binary)
-npm run typecheck && npm run lint
-KAIZEN_TEST_LIVE=1 npm run test:integration   # real nodes (x86_64 host)
-KAIZEN_TEST_V3=1 …                            # live V3 probe
-KAIZEN_TEST_V3_WRITE=1 KAIZEN_V3_SIGNER_SURI=… …  # live V3 anchoring (spends tPOT)
-```
-
-Gated suites are **skipped** without their flag and never reported as passed.
+The implementation plan and progress log describe the current state and remaining work. Planned areas include deployment adapters for Docker and Kubernetes/Helm, additional validator operations, and broader end-to-end verification. Planned capabilities are not represented as completed features. See [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) and [Progress](docs/PROGRESS.md).
 
 ## Documentation
 
-| Document | Purpose |
-|---|---|
-| [docs/PROJECT_SPEC.md](docs/PROJECT_SPEC.md) | Locked scope, goals, acceptance criteria |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, V3 anchoring path, security boundaries |
-| [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) | Phases, task IDs, statuses |
-| [docs/PROGRESS.md](docs/PROGRESS.md) | Chronological engineering log |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | Decision records (DEC-026/027 V3 anchoring, DEC-028 console) |
-| [docs/TESTING.md](docs/TESTING.md) | Test strategy, commands, actual results |
-| [docs/RISKS.md](docs/RISKS.md) | Risk register |
-| [docs/TECHNICAL_RESEARCH.md](docs/TECHNICAL_RESEARCH.md) | Portaldot capability matrix |
-| [docs/PHASE_REPORT.md](docs/PHASE_REPORT.md) · [docs/reports/](docs/reports/) | Phase reports |
-| [docs/DEMO.md](docs/DEMO.md) | Demo shot list |
-| [AGENTS.md](AGENTS.md) | Build governance for agents |
+- [Project specification](docs/PROJECT_SPEC.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
+- [Technical research](docs/TECHNICAL_RESEARCH.md)
+- [Risk register](docs/RISKS.md)
+- [Decision records](docs/DECISIONS.md)
+- [Progress log](docs/PROGRESS.md)
+- [Testing strategy and evidence](docs/TESTING.md)
+- [Phase reports](docs/PHASE_REPORT.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Kaizen is released under the MIT License. See [LICENSE](LICENSE) for the complete terms.

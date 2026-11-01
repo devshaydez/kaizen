@@ -21,6 +21,7 @@ import { ACTIVE_FAULT_STATES, healthyCount } from '../lib/model';
 import { useConsole } from '../state/ConsoleContext';
 import { useAsync } from '../state/useAsync';
 import { nodeTitle } from './Lab';
+import { REPLAY } from '../lib/mode';
 
 interface TimelineEntry {
   t: string | null;
@@ -78,7 +79,7 @@ export function Incidents() {
   if (!network) return <NoNet />;
   const banner = (
     <div className="sub" style={{ marginTop: 18 }}>
-      Incidents here are recorded Failure Lab faults. Automatic detection, correlation and root-cause hints <Planned phase="Phase 4" />
+      Recorded Failure Lab faults and recovery evidence; automatic detection is not implemented (Phase 4).
     </div>
   );
   if (!f)
@@ -174,7 +175,11 @@ export function Incidents() {
           <div className="lab">Relevant logs</div>
           <div className="logbox" aria-label="Node log tail">
             {logs.loading && <div className="muted">Loading {label} log…</div>}
-            {!logs.loading && lines.length === 0 && <div className="muted">No log lines available for {label}.</div>}
+            {!logs.loading && lines.length === 0 && (
+              <div className="muted" style={{ whiteSpace: 'normal' }}>
+                {REPLAY ? 'Not recorded in replay: drill bundles do not carry node log files.' : `No log lines available for ${label}.`}
+              </div>
+            )}
             {lines.map((l, i) => (
               <div key={i} className={/WARN|ERROR|error/.test(l) ? 'w' : ''} title={l}>
                 {logLine(l)}
@@ -182,7 +187,7 @@ export function Incidents() {
             ))}
           </div>
           <div className="sub" style={{ marginTop: 8 }}>
-            Tail of {label}&apos;s log file (current, not time-filtered).
+            {REPLAY ? 'The runner log on GitHub has the full drill output.' : <>Tail of {label}&apos;s log file (current, not time-filtered).</>}
           </div>
         </section>
       </div>

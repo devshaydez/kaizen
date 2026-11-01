@@ -21,6 +21,8 @@ import { Waves } from '../components/Backdrop';
 
 export const UP_COMMAND = 'npx kaizen up';
 const REPO = 'https://github.com/Shaydez-Defi/kaizen';
+/** Static public deployment (no Kaizen API behind it): point visitors at the live drills. */
+const PUBLIC_DEMO = import.meta.env?.['VITE_KAIZEN_PUBLIC'] === '1';
 export const V3_REGISTRY = '0x08fdadd1ebe16234c03b723255cc12fd98a5ef07';
 export const V3_CHAIN_ID = 420420777;
 /** Same block-link format as the engine (V3AnchorService.blockUrlTemplate). */
@@ -101,6 +103,7 @@ const FAQ: [string, string][] = [
 
 function useHealthLine() {
   const health = useAsync((_s) => apiClient.health({ timeoutMs: 4000 }), []);
+  if (PUBLIC_DEMO) return { ok: true, text: 'Hosted console · replay of real recorded drills (read-only)' };
   if (health.data) return { ok: true, text: `Control plane connected · v${health.data.version}` };
   if (health.loading) return { ok: false, text: 'Checking control plane…' };
   return { ok: false, text: 'Control plane unreachable — start it with node apps/api/dist/index.js' };
@@ -246,8 +249,9 @@ function BreakIllustration() {
 export function Landing() {
   const nav = useNavigate();
   const cp = useHealthLine();
+  const reduce = useReducedMotion();
   const status = <span className={cp.ok ? 'ok' : 'bad'}>{cp.text}</span>;
-  const rise = { initial: { opacity: 0, y: 18 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-60px' }, transition: { duration: 0.7, ease } };
+  const rise = { initial: reduce ? false : { opacity: 0, y: 18 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-60px' }, transition: { duration: reduce ? 0 : 0.2, ease } };
   return (
     <div className="landing" id="top">
       <div className="wrap">
@@ -257,13 +261,17 @@ export function Landing() {
             <a href="#product">Product</a>
             <a href="#lab">Failure Lab</a>
             <a href="#v3">Portaldot V3</a>
+            <Link to="/live">Live proof</Link>
             <a href={`${REPO}#readme`} target="_blank" rel="noreferrer">
               Docs
             </a>
           </nav>
-          <Btn tone="pri" arrow onClick={() => nav('/overview')}>
-            Launch console
-          </Btn>
+          <span className="lnav-cta">
+            {PUBLIC_DEMO && <Btn onClick={() => nav('/live')}>See a live drill</Btn>}
+            <Btn tone="pri" arrow onClick={() => nav('/overview')}>
+              Launch console
+            </Btn>
+          </span>
         </header>
       </div>
 
@@ -275,25 +283,38 @@ export function Landing() {
         <section className="hero">
           <div>
             <div className="eyebrow">Portaldot node operations</div>
-            <motion.h1 initial={{ opacity: 0, y: 14, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} transition={{ duration: 0.8, ease }}>
-              A Portaldot network
+            <motion.h1
+              initial={reduce ? false : { opacity: 0, y: 14, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: reduce ? 0 : 0.2, ease }}
+            >
+              An upgrade can pass
               <br />
-              in one <span className="g">command.</span>
+              and still break <span className="g">validators.</span>
             </motion.h1>
-            <p>Validators, topology, failure injection and diagnostics. One command brings up a real local network; the console and CLI drive it through one engine.</p>
+            <p>Kaizen drills real Portaldot networks and verifies recovery with evidence before a passing upgrade can break validators.</p>
+            <p>Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.</p>
+            <Btn tone="pri" arrow onClick={() => nav(PUBLIC_DEMO ? '/live' : '/lab')}>
+              Run Drill Now
+            </Btn>
             <CopyCmd cmd={UP_COMMAND} />
             <div className="targets">
               LOCAL · <s>DOCKER</s>
               <sup>SOON</sup> · <s>KUBERNETES</s>
               <sup>SOON</sup>
             </div>
-            <div className="hint">From the repo root after npm install && npm run build. {status}</div>
+            <div className="hint">{status}</div>
           </div>
-          <motion.div className="glass term" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.15, ease }}>
+            <motion.div
+              className="glass term"
+              initial={reduce ? false : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduce ? 0 : 0.2, delay: reduce ? 0 : 0.05, ease }}
+            >
             <div className="lab">Terminal</div>
             <pre aria-label="kaizen up output">
               {TERMINAL.map(([c, l], i) => (
-                <motion.div key={i} className={c} initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.35 + i * 0.12, duration: 0.35, ease }}>
+                <motion.div key={i} className={c} initial={reduce ? false : { opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: reduce ? 0 : 0.05 + i * 0.015, duration: reduce ? 0 : 0.15, ease }}>
                   {l || ' '}
                 </motion.div>
               ))}
@@ -301,7 +322,7 @@ export function Landing() {
           </motion.div>
         </section>
 
-        <section className="lstats" aria-label="At a glance">
+        <motion.section className="lstats" aria-label="At a glance" {...rise}>
           <div className="stat">
             <div className="lab">Command</div>
             <div className="num">1</div>
@@ -322,7 +343,7 @@ export function Landing() {
             <div className="num">1</div>
             <div className="sub">Same for CLI and console</div>
           </div>
-        </section>
+        </motion.section>
 
         <motion.section className="lsec" id="product" {...rise}>
           <h2>What Kaizen is, and isn’t</h2>
@@ -352,7 +373,7 @@ export function Landing() {
             <LifecycleWave />
             <ol>
               {LIFECYCLE.map((s, i) => (
-                <motion.li key={s.t} whileHover={{ y: -5 }} transition={{ duration: 0.2, ease }}>
+            <motion.li key={s.t} whileHover={reduce ? undefined : { y: -3 }} whileTap={reduce ? undefined : { scale: 0.99 }} transition={{ duration: reduce ? 0 : 0.2, ease }}>
                   <div className="ic">
                     <Icon d={s.icon} />
                   </div>
@@ -537,7 +558,7 @@ export function Landing() {
           <div className="fcols">
             <div>
               <span className="brand">KAIZEN</span>
-              <p>Portaldot node operations and infrastructure platform.</p>
+              <p>Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.</p>
               <CopyCmd cmd={UP_COMMAND} small />
             </div>
             <div>
