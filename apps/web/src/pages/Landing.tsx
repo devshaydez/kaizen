@@ -256,7 +256,7 @@ export function Landing() {
     <div className="landing" id="top">
       <div className="wrap">
         <header className="lnav">
-          <span className="brand">KAIZEN</span>
+          <Link to="/" className="brand" aria-label="Kaizen home">KAIZEN</Link>
           <nav aria-label="Landing">
             <a href="#product">Product</a>
             <a href="#lab">Failure Lab</a>
@@ -266,7 +266,7 @@ export function Landing() {
               Docs
             </a>
           </nav>
-          <span className="lnav-cta">
+          <span className="lnav-cta hero-actions">
             {PUBLIC_DEMO && <Btn onClick={() => nav('/live')}>See a live drill</Btn>}
             <Btn tone="pri" arrow onClick={() => nav('/overview')}>
               Launch console

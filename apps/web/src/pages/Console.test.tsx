@@ -48,9 +48,15 @@ describe('App shell', () => {
     renderConsole(<App />, { route: '/overview', withConsole: false });
     expect(await screen.findByLabelText('Control plane status')).toHaveTextContent(/connected/);
     expect(await screen.findByLabelText('Selected network')).toHaveValue('net_1');
-    const steps = screen.getByRole('list', { name: 'Lifecycle' });
-    expect(within(steps).getByRole('link', { name: 'Monitor' })).toHaveAttribute('aria-current', 'step');
-    expect(within(screen.getByRole('navigation', { name: 'Console' })).getByRole('button', { name: 'Networks' })).toBeEnabled();
+    const header = document.querySelector('.main > .top');
+    expect(header).toBeInTheDocument();
+    expect(within(header as HTMLElement).getByRole('link', { name: 'Kaizen home' })).toBeInTheDocument();
+    expect(within(header as HTMLElement).getByLabelText('Selected network')).toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Console' });
+    expect(within(nav).getByRole('button', { name: 'Networks' })).toBeEnabled();
+    expect(within(nav).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
+    expect(within(nav).getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Lifecycle' })).not.toBeInTheDocument();
   });
 
   it('keeps mobile shell navigation and the landing hero inside responsive wrappers', async () => {
@@ -58,6 +64,12 @@ describe('App shell', () => {
     expect(await screen.findByRole('heading', { name: /An upgrade can pass/ })).toBeInTheDocument();
     expect(screen.getByLabelText('Landing')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
+    const landingBrand = screen.getByRole('link', { name: 'Kaizen home' });
+    expect(landingBrand).toHaveAttribute('href', '/');
+    expect(document.querySelector('.lnav-cta')).toHaveClass('hero-actions');
+    await userEvent.click(screen.getByRole('button', { name: 'Launch console' }));
+    expect(await screen.findByRole('navigation', { name: 'Console' })).toBeInTheDocument();
+    expect(document.querySelector('.main > .top')).toBeInTheDocument();
   });
 
   it('landing shows only real commands and labels planned targets', async () => {
