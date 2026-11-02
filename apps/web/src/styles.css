@@ -432,11 +432,15 @@ a.ext{text-decoration:underline;text-underline-offset:3px}
   .lab-wrap{align-items:start;gap:18px}
   .lab-wrap>.stage,.lab-wrap>div>.stage{margin-bottom:0}
   .lab-wrap .inj{position:relative;z-index:1}
-  .lnav{align-items:center;flex-wrap:wrap;gap:10px 14px;padding-top:14px}
-  .lnav>.brand{margin:0;font-size:22px}
-  .lnav-cta{margin-left:auto;gap:6px}
-  .lnav-cta .btn{min-height:44px;padding:0 12px;font-size:12px;gap:8px}
-  .lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}
+  .lnav{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;justify-content:initial;column-gap:8px;row-gap:8px}
+  .lnav>.brand{margin:0;font-size:16px;letter-spacing:.12em;white-space:nowrap}
+  .lnav nav{display:none}
+  .lnav .lnav-cta.hero-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:4px;width:100%;min-width:0;margin:0}
+  .lnav .lnav-cta.hero-actions>.btn{box-sizing:border-box;width:100%;min-width:0;min-height:34px;margin:0;padding:0 4px;font-size:10px;gap:0;white-space:nowrap}
+  .lnav .lnav-cta.hero-actions>.btn i{display:none}
+  .top{display:flex;align-items:center;justify-content:flex-start;gap:8px}
+  .top .net{margin-left:auto}
+  .console-brand{display:none}
   .hero{grid-template-columns:minmax(0,1fr);gap:24px;margin-top:24px;padding-top:0;padding-bottom:0}
   .hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
   .hero-actions .btn{margin:0}

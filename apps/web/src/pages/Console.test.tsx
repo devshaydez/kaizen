@@ -4,6 +4,7 @@
  * unknowns render as "—", operations go through the typed client only.
  */
 
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -81,6 +82,30 @@ describe('App shell', () => {
     expect(screen.getByLabelText('V3 evidence')).toHaveTextContent('0x08fdadd1ebe16234c03b723255cc12fd98a5ef07');
     expect(screen.getByLabelText('V3 evidence')).toHaveTextContent('420420777');
     expect(screen.getByText(/Illustration — the console draws this view/)).toBeInTheDocument();
+  });
+
+  it('fits the landing header CTA beside a reduced brand on phone widths', async () => {
+    renderConsole(<App />, { route: '/', withConsole: false });
+    await screen.findByRole('heading', { name: /An upgrade can pass/ });
+    const desktopWidth = window.innerWidth;
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    window.dispatchEvent(new Event('resize'));
+    const brand = screen.getByRole('link', { name: 'Kaizen home' });
+    const ctas = document.querySelector('.lnav-cta');
+    const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
+    const phoneRules = mobileCss.match(/@media \(max-width:640px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    expect(brand).toBeInTheDocument();
+    expect(ctas).toHaveClass('hero-actions');
+    expect(ctas?.children).toHaveLength(1);
+    expect(ctas?.children[0]).toHaveClass('sm');
+    expect(phoneRules).toMatch(/\.lnav>\.brand\{[^}]*font-size:16px/);
+    expect(phoneRules).toMatch(/\.lnav \.lnav-cta\.hero-actions\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+    expect(phoneRules).toContain('.lnav .lnav-cta.hero-actions>.btn{box-sizing:border-box;width:100%;min-width:0;min-height:34px;margin:0;padding:0 4px;font-size:10px;gap:0;white-space:nowrap}');
+    expect(phoneRules).toContain('.lnav .lnav-cta.hero-actions>.btn i{display:none}');
+    expect(phoneRules).toContain('.console-brand{display:none}');
+    expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: desktopWidth });
+    window.dispatchEvent(new Event('resize'));
   });
 
   it('landing shows real control-plane status and launches the console', async () => {
