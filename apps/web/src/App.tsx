@@ -153,13 +153,12 @@ function Shell(): JSX.Element {
     <>
       <Backdrop word={watermarkFor(loc.pathname, faultActive)} />
       <div className="app">
-        <aside className={`side ${menuOpen ? 'open' : ''}`}>
-          <button type="button" className="menu-btn" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-            <span /><span /><span />
-          </button>
+        {menuOpen && <button type="button" className="drawer-scrim" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} />}
+        <aside id="console-sidebar" className={`side ${menuOpen ? 'open' : ''}`}>
           <Link to="/" className="brand" aria-label="Kaizen home">
             KAIZEN
           </Link>
+          <button type="button" className="drawer-close" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)}>×</button>
           <LayoutGroup id="nav">
             <motion.nav
               aria-label="Console"
@@ -195,6 +194,10 @@ function Shell(): JSX.Element {
           <ControlPlane />
         </aside>
         <main className="main">
+          <button type="button" className="menu-btn" aria-label="Open navigation menu" aria-expanded={menuOpen} aria-controls="console-sidebar" onClick={() => setMenuOpen((v) => !v)}>
+            <span /><span /><span />
+          </button>
+          <Link to="/" className="console-brand" aria-label="Kaizen home">KAIZEN</Link>
           <header className="top">
             <LayoutGroup id="steps">
               <ol className="steps" aria-label="Lifecycle">

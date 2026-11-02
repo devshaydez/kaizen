@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 import { REPLAY } from '../lib/mode';
 
 export interface RouteDataStatus {
@@ -27,14 +27,16 @@ export function routeDataStatus(path: string): RouteDataStatus | null {
 }
 
 export function ConsoleDataNotice({ path }: { path: string }): JSX.Element | null {
+  const [expanded, setExpanded] = useState(false);
   if (!REPLAY) return null;
   const status = routeDataStatus(path);
   if (!status) return null;
   return (
-    <div className="replaybar" role="note" aria-label={`${status.label} data source`}>
+    <div className={`replaybar ${expanded ? 'expanded' : ''}`} role="note" aria-label={`${status.label} data source`}>
       <b>{status.label} DATA</b>
-      <span>{status.detail}</span>
-      {status.unavailable && <span><b>NOT IMPLEMENTED:</b> {status.unavailable}</span>}
+      <span className="notice-detail">{status.detail}</span>
+      {status.unavailable && <span className="notice-unavailable"><b>NOT IMPLEMENTED:</b> {status.unavailable}</span>}
+      <button type="button" className="notice-toggle" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>{expanded ? 'less' : 'more'}</button>
     </div>
   );
 }
