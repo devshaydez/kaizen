@@ -294,10 +294,12 @@ export function Landing() {
             </motion.h1>
             <p>Kaizen drills real Portaldot networks and verifies recovery with evidence before a passing upgrade can break validators.</p>
             <p>Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.</p>
-            <Btn tone="pri" arrow onClick={() => nav(PUBLIC_DEMO ? '/live' : '/lab')}>
-              Run Drill Now
-            </Btn>
-            <CopyCmd cmd={UP_COMMAND} />
+            <div className="hero-actions">
+              <Btn tone="pri" arrow onClick={() => nav(PUBLIC_DEMO ? '/live' : '/lab')}>
+                Run Drill Now
+              </Btn>
+              <CopyCmd cmd={UP_COMMAND} />
+            </div>
             <div className="targets">
               LOCAL · <s>DOCKER</s>
               <sup>SOON</sup> · <s>KUBERNETES</s>
