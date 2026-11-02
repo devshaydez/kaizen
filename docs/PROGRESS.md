@@ -1494,3 +1494,14 @@ K8s/Helm: untouched.
 **Work**: On `fix/mobile-ux-390px`, retain a compact scrollable lifecycle stepper while keeping the console drawer trigger fixed and reachable; remove the shrunken topology stage that overlapped the Failure Lab form; constrain the landing hero heading and allow the header action to reflow; let `/live` drill history scroll horizontally at a legible minimum table width. Desktop rules are unchanged.
 
 **Verification**: First GitHub Actions test run found a faulty regression-test query for an unlabeled nav. The test now renders the app shell (rather than the isolated Lab page) before checking the console navigation and menu button. Retest running; 390px browser evidence not available in this environment.
+
+
+---
+
+## 2026-11-02: T-3.8 compact mobile replay notices (390px)
+
+**Work**: Shortened replay-source and unavailable-action notices, distinguished the compact route notice from the persistent replay banner, and added narrow-screen wrapping and spacing so IDs, text, and links stay within the viewport. Kept the read-only indicator, recorded health/topology disclaimer, runner-log link, and live/unavailable status.
+
+**Verification**: pending.
+
+**Status**: IMPLEMENTED, not yet VERIFIED.

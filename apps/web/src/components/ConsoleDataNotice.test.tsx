@@ -8,6 +8,14 @@ describe('console route source audit', () => {
     expect(routeDataStatus('/v3')?.detail).toContain('published bundles');
   });
 
+  it('keeps recorded health and topology distinct from live telemetry', () => {
+    expect(routeDataStatus('/overview')?.detail).toBe('Health and topology are recorded snapshots, not live telemetry.');
+  });
+
+  it('keeps replay copy concise while retaining unavailable action status', () => {
+    expect(routeDataStatus('/lab')).toMatchObject({ label: 'REPLAY', detail: 'Recorded drill evidence.', unavailable: 'Fault execution unavailable in demo.' });
+  });
+
   it('labels snapshot-driven routes as replay data', () => {
     for (const route of ['/overview', '/networks', '/validators', '/lab', '/scenarios', '/incidents', '/deployments', '/settings', '/create']) {
       expect(routeDataStatus(route)?.label, route).toBe('REPLAY');

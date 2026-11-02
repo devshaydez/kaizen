@@ -29,11 +29,11 @@ export function ReplayBanner() {
   if (!data) return null;
   const b = data.drills.find((x) => x.run.networkId === selectedId) ?? data.drills[0];
   return (
-    <div className="replaybar" role="note" aria-label="Replay mode">
+    <div className="replaybar replaybar--banner" role="note" aria-label="Replay mode">
       <span className="replaydot" aria-hidden />
       {b ? (
         <span>
-          Replay of real drill <b className="mono-s">{drillShortId(b)}</b> · recorded {when(b.run.finishedAt ?? b.publishedAt)}
+          Demo replay · <b className="mono-s">{drillShortId(b)}</b> · {when(b.run.finishedAt ?? b.publishedAt)}
           {b.workflow?.url && (
             <>
               {' · '}

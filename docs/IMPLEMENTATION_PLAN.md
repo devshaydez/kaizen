@@ -162,3 +162,8 @@ surface early; full implementation stays in Phase 6.
 ## T-3.7: mobile console usability (390px)
 
 **Status: IMPLEMENTED, pending verification.** Fix the audited mobile navigation reachability on `/lab` and `/live`, Failure Lab topology/form separation, landing hero and header wrapping, and readable `/live` drill history. Preserve desktop layout and existing product scope. Add regression tests and verify with web tests, typecheck, lint, build, and a 390px browser check where available.
+
+
+## T-3.8: compact mobile replay notices (390px)
+
+**Status: IMPLEMENTED, pending verification.** Reduce repeated replay-source prose and notice sizing in the console header, preserve the read-only demo label, recorded health/topology disclaimer, runner-log link, and unavailable-action status. Verify web tests, typecheck, lint, build, and the hosted `/lab` view at 390px. Keep navigation/sidebar work out of scope.

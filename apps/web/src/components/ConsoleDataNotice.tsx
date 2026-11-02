@@ -8,17 +8,17 @@ export interface RouteDataStatus {
 }
 
 const ROUTES: Record<string, RouteDataStatus> = {
-  '/overview': { label: 'REPLAY', detail: 'Published demo-data drills are primary. Committed docs/evidence fixtures are fallback history. Health and topology are recorded, not live node telemetry.' },
-  '/networks': { label: 'REPLAY', detail: 'Published drill network snapshots are primary. Committed fixtures are fallback history, not live networks.', unavailable: 'Network creation and control are not implemented in hosted replay.' },
-  '/validators': { label: 'REPLAY', detail: 'Published demo-data drills are primary. Committed fixtures are fallback history. Validator status and metrics are recorded snapshots, not live telemetry.' },
-  '/lab': { label: 'REPLAY', detail: 'Published drill evidence is primary; committed fixtures are fallback history.', unavailable: 'Fault execution is not implemented in hosted replay.' },
-  '/scenarios': { label: 'REPLAY', detail: 'Scenario history uses published drill bundles first, with committed docs/evidence fixtures as recorded history.', unavailable: 'Saving, executing, and replaying scenarios are not implemented in hosted replay.' },
-  '/incidents': { label: 'REPLAY', detail: 'Published drill evidence is primary; committed fixtures are fallback history, not live incident monitoring.', unavailable: 'Live incident monitoring is not implemented in hosted replay.' },
-  '/deployments': { label: 'REPLAY', detail: 'Published drill bundles are primary; committed fixtures are fallback run evidence.', unavailable: 'Deployment control is not implemented in hosted replay.' },
-  '/settings': { label: 'REPLAY', detail: 'Settings are not connected to a live control plane in hosted replay.', unavailable: 'Persisting control-plane settings is not implemented in hosted replay.' },
-  '/create': { label: 'REPLAY', detail: 'The hosted console has no live engine attached.', unavailable: 'Network creation is not implemented in hosted replay.' },
-  '/v3': { label: 'LIVE', detail: 'V3 endpoint status is queried live. Anchor and run history uses published bundles and committed evidence.', unavailable: 'Submitting new anchors is not implemented in hosted replay.' },
-  '/live': { label: 'LIVE', detail: 'The latest published demo-data bundle and Portaldot V3 public monitor are fetched live. Drill evidence itself is recorded.' },
+  '/overview': { label: 'REPLAY', detail: 'Health and topology are recorded snapshots, not live telemetry.' },
+  '/networks': { label: 'REPLAY', detail: 'Network snapshots are recorded, not live.', unavailable: 'Network controls unavailable in demo.' },
+  '/validators': { label: 'REPLAY', detail: 'Validator health and metrics are recorded snapshots, not live telemetry.' },
+  '/lab': { label: 'REPLAY', detail: 'Recorded drill evidence.', unavailable: 'Fault execution unavailable in demo.' },
+  '/scenarios': { label: 'REPLAY', detail: 'Scenario history is recorded.', unavailable: 'Scenario controls unavailable in demo.' },
+  '/incidents': { label: 'REPLAY', detail: 'Incident evidence is recorded, not live.', unavailable: 'Live incident monitoring unavailable in demo.' },
+  '/deployments': { label: 'REPLAY', detail: 'Deployment history is recorded.', unavailable: 'Deployment controls unavailable in demo.' },
+  '/settings': { label: 'REPLAY', detail: 'No live control plane is connected.', unavailable: 'Settings cannot be saved in demo.' },
+  '/create': { label: 'REPLAY', detail: 'No live engine is attached.', unavailable: 'Network creation unavailable in demo.' },
+  '/v3': { label: 'LIVE', detail: 'Endpoint status is live; anchor and run history is recorded.', unavailable: 'New anchors unavailable in demo.' },
+  '/live': { label: 'LIVE', detail: 'Public monitor is live; drill evidence is recorded.' },
 };
 
 export function routeDataStatus(path: string): RouteDataStatus | null {
@@ -31,10 +31,10 @@ export function ConsoleDataNotice({ path }: { path: string }): JSX.Element | nul
   const status = routeDataStatus(path);
   if (!status) return null;
   return (
-    <div className="replaybar" role="note" aria-label={`${status.label} data source`}>
-      <b>{status.label} DATA</b>
+    <div className="replaybar replaybar--route" role="note" aria-label={`${status.label} data source`}>
+      <b>{status.label}</b>
       <span>{status.detail}</span>
-      {status.unavailable && <span><b>NOT IMPLEMENTED:</b> {status.unavailable}</span>}
+      {status.unavailable && <span>{status.unavailable}</span>}
     </div>
   );
 }
