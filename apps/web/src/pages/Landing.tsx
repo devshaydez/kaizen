@@ -256,7 +256,7 @@ export function Landing() {
     <div className="landing" id="top">
       <div className="wrap">
         <header className="lnav">
-          <span className="brand">KAIZEN</span>
+          <Link to="/" className="brand" aria-label="Kaizen home">KAIZEN</Link>
           <nav aria-label="Landing">
             <a href="#product">Product</a>
             <a href="#lab">Failure Lab</a>
@@ -266,9 +266,9 @@ export function Landing() {
               Docs
             </a>
           </nav>
-          <span className="lnav-cta">
-            {PUBLIC_DEMO && <Btn onClick={() => nav('/live')}>See a live drill</Btn>}
-            <Btn tone="pri" arrow onClick={() => nav('/overview')}>
+          <span className="lnav-cta hero-actions">
+            {PUBLIC_DEMO && <Btn small onClick={() => nav('/live')}>See a live drill</Btn>}
+            <Btn tone="pri" arrow small onClick={() => nav('/overview')}>
               Launch console
             </Btn>
           </span>
@@ -294,10 +294,12 @@ export function Landing() {
             </motion.h1>
             <p>Kaizen drills real Portaldot networks and verifies recovery with evidence before a passing upgrade can break validators.</p>
             <p>Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.</p>
-            <Btn tone="pri" arrow onClick={() => nav(PUBLIC_DEMO ? '/live' : '/lab')}>
-              Run Drill Now
-            </Btn>
-            <CopyCmd cmd={UP_COMMAND} />
+            <div className="hero-actions">
+              <Btn tone="pri" arrow onClick={() => nav(PUBLIC_DEMO ? '/live' : '/lab')}>
+                Run Drill Now
+              </Btn>
+              <CopyCmd cmd={UP_COMMAND} />
+            </div>
             <div className="targets">
               LOCAL · <s>DOCKER</s>
               <sup>SOON</sup> · <s>KUBERNETES</s>

@@ -4,6 +4,7 @@
  * unknowns render as "—", operations go through the typed client only.
  */
 
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -48,9 +49,28 @@ describe('App shell', () => {
     renderConsole(<App />, { route: '/overview', withConsole: false });
     expect(await screen.findByLabelText('Control plane status')).toHaveTextContent(/connected/);
     expect(await screen.findByLabelText('Selected network')).toHaveValue('net_1');
-    const steps = screen.getByRole('list', { name: 'Lifecycle' });
-    expect(within(steps).getByRole('link', { name: 'Monitor' })).toHaveAttribute('aria-current', 'step');
-    expect(within(screen.getByRole('navigation', { name: 'Console' })).getByRole('button', { name: 'Networks' })).toBeEnabled();
+    const header = document.querySelector('.main > .top');
+    expect(header).toBeInTheDocument();
+    expect(within(header as HTMLElement).getByRole('link', { name: 'Kaizen home' })).toBeInTheDocument();
+    expect(within(header as HTMLElement).getByLabelText('Selected network')).toBeInTheDocument();
+    const nav = screen.getByRole('navigation', { name: 'Console' });
+    expect(within(nav).getByRole('button', { name: 'Networks' })).toBeEnabled();
+    expect(within(nav).getByRole('button', { name: 'Overview' })).toHaveAttribute('aria-current', 'page');
+    expect(within(nav).getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Lifecycle' })).not.toBeInTheDocument();
+  });
+
+  it('keeps mobile shell navigation and the landing hero inside responsive wrappers', async () => {
+    renderConsole(<App />, { route: '/', withConsole: false });
+    expect(await screen.findByRole('heading', { name: /An upgrade can pass/ })).toBeInTheDocument();
+    expect(screen.getByLabelText('Landing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
+    const landingBrand = screen.getByRole('link', { name: 'Kaizen home' });
+    expect(landingBrand).toHaveAttribute('href', '/');
+    expect(document.querySelector('.lnav-cta')).toHaveClass('hero-actions');
+    await userEvent.click(screen.getByRole('button', { name: 'Launch console' }));
+    expect(await screen.findByRole('navigation', { name: 'Console' })).toBeInTheDocument();
+    expect(document.querySelector('.main > .top')).toBeInTheDocument();
   });
 
   it('landing shows only real commands and labels planned targets', async () => {
@@ -62,6 +82,38 @@ describe('App shell', () => {
     expect(screen.getByLabelText('V3 evidence')).toHaveTextContent('0x08fdadd1ebe16234c03b723255cc12fd98a5ef07');
     expect(screen.getByLabelText('V3 evidence')).toHaveTextContent('420420777');
     expect(screen.getByText(/Illustration — the console draws this view/)).toBeInTheDocument();
+  });
+
+  it('keeps the 390px landing hero CTAs stacked and proportioned, without changing desktop button rules', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    renderConsole(<App />, { route: '/', withConsole: false });
+    await screen.findByRole('heading', { name: /An upgrade can pass/ });
+    const brand = screen.getByRole('link', { name: 'Kaizen home' });
+    const ctas = document.querySelector('.lnav-cta');
+    const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
+    const phoneRules = mobileCss.slice(mobileCss.lastIndexOf('@media (max-width:640px)'));
+    const desktopCss = mobileCss.slice(0, mobileCss.indexOf('@media (max-width:1180px)'));
+    expect(brand).toBeInTheDocument();
+    expect(ctas).toHaveClass('hero-actions');
+    expect(ctas?.children).toHaveLength(1);
+    const launch = within(ctas as HTMLElement).getByRole('button', { name: 'Launch console' });
+    expect(launch).toHaveClass('sm', 'pri');
+    expect(launch.querySelector('i')).toBeInTheDocument();
+    expect(phoneRules).toMatch(/\.lnav>\.brand\{[^}]*font-size:22px/);
+    expect(phoneRules).toContain('.lnav .lnav-cta .btn.ghost{display:none}');
+    expect(phoneRules).toContain('.lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:8px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn{box-sizing:border-box;width:100%;min-height:54px;padding:0 26px;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn i{width:34px;height:34px;margin-right:-16px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:100%;max-width:100%;min-height:60px;gap:12px;padding:8px 8px 8px 18px;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd code{min-width:0;white-space:nowrap;font-size:clamp(12px,3.7vw,16px)}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd button{flex:none;min-height:44px;padding:0 14px;font-size:13px}');
+    expect(phoneRules).not.toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:max-content');
+    expect(desktopCss).toContain('.cmd{display:inline-flex;align-items:center;gap:18px;padding:8px 8px 8px 26px');
+    expect(desktopCss).toContain('.btn{display:inline-flex;align-items:center;justify-content:center;gap:16px;min-height:54px;padding:0 26px');
+    expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Run Drill Now/ })).toBeInTheDocument();
+    expect(within(document.querySelector('.landing .hero .hero-actions') as HTMLElement).getByRole('button', { name: 'Copy npx kaizen up' })).toBeInTheDocument();
   });
 
   it('landing shows real control-plane status and launches the console', async () => {

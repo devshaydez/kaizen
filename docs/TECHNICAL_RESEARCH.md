@@ -644,6 +644,24 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
 
 ---
 
+## R-25: Read-only monitoring surface on V3: polling budget and validator-identity sources (mentor A3)
+
+- **Question**: Can Kaizen poll `wss://test-node-v3.portaldot.dev` (and the public EVM RPC) at roughly one request per block without harming the endpoint, and what is the authoritative source for the active validator set to score, given no official list is published?
+- **Source**: mentor guidance (2026-10-31, A3): one request per block is appropriate; no official validator list is maintained yet; prioritize querying on-chain state.
+- **Polling stance**: read-only polling at ~1 request per block is an appropriate rate for the public V3 WS endpoint. The engine's monitor samples node RPC on an interval and reads only public state; it never submits transactions or mutating extrinsics to shared endpoints. The EVM RPC is read only for anchoring receipts/verification lookups.
+- **Validator-identity sources (query on-chain state, in priority order)**:
+  - Current validators: `session.validators`
+  - Next session keys: `session.queuedKeys`, `session.nextKeys`
+  - Current session index: `session.currentIndex`
+  - BABE authorities set: `babe.authorities`
+  - GRANDPA authorities set: `grandpa.authorities`
+- **Attribution rule (ties into A2 hardening, PR #27)**: BABE authorship is mapped through the authorities set in effect at the block being decoded; GRANDPA finality lag is suppressed across authority-set changes; era is never used as a basis for BABE identity (it governs elections and rewards).
+- **Status**: **PARTIALLY VERIFIED**: the engine already reads `session.validators`, `babe.authorities`, and `grandpa.authorities` through its RPC layer (see `packages/engine/src/resilience`), and the per-block attribution rule is implemented and tested (PR #27). Polling-rate impact on the shared public endpoint is a stated mentor position, not independently load-tested by Kaizen.
+- **Uncertainties**: no official list of active V3 validators exists yet; whether `session.nextKeys` is populated on V3 at the current session boundary has not been probed.
+- **Next verification step**: log one session/epoch transition on the live endpoint and record the storage reads observed (keys, latency, rate) before demo day.
+
+---
+
 ## Summary Matrix
 
 | ID | Capability | Status |
@@ -672,3 +690,4 @@ executed); adapter-internal polling bounds need a wrap backstop ABOVE them
 | R-22 | Fault mechanisms: pause/disconnect/partition/terminate (T-3.1) | PARTIALLY VERIFIED: A/B2/C2/C4/C5/D VERIFIED; B1/C1/C3 negative results proven (see matrix). T-3.2: pause + terminate IMPLEMENTED and re-verified live through the injector; peer-disconnect + partition registered as typed-blocked (see T-3.2 status table) |
 | R-23 | Portaldot V3 public endpoints: connectivity & identity (T-8.1) | VERIFIED (2026-10-19): Substrate WS chain "PortaldotV3 Test", health peers 2 / not syncing, best #106135; EVM chain id 420420777 matches config, same height via both surfaces, client `eth-rpc/main-fddd431…`; point-in-time, single host |
 | R-24 | Explorer public HTTP response (T-8.1) | PARTIALLY VERIFIED: HTTP 200 / text/html / title "Portaldot Node Console" verified (availability-only check); SPA data views not verified (no browser/JS execution; out of scope) |
+| R-25 | V3 monitoring surface: polling budget + validator-identity sources (A3) | PARTIALLY VERIFIED: ~1 req/block read-only stance per mentor guidance; storage-key sources implemented and tested (PR #27); endpoint load impact not independently load-tested |

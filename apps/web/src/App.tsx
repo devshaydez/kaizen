@@ -10,7 +10,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { Live } from './pages/Live';
 import { Backdrop } from './components/Backdrop';
 import { NodeDrawer } from './components/NodeDrawer';
-import { STEPS, ease } from './components/ui';
+import { ease } from './components/ui';
 import { ConsoleProvider, useConsole } from './state/ConsoleContext';
 import { useEventsContext } from './state/EventsContext';
 import { useAsync } from './state/useAsync';
@@ -145,7 +145,6 @@ function Shell(): JSX.Element {
   const nav = useNavigate();
   const reduceMotion = useReducedMotion();
   const { network, faults } = useConsole();
-  const ph = stepFor(loc.pathname);
   const section = '/' + (loc.pathname.split('/')[1] ?? '');
   const faultActive = faults.some((f) => f.mode === 'execute' && ACTIVE_FAULT_STATES.has(f.state));
   const [menuOpen, setMenuOpen] = useState(false);
@@ -153,13 +152,12 @@ function Shell(): JSX.Element {
     <>
       <Backdrop word={watermarkFor(loc.pathname, faultActive)} />
       <div className="app">
-        <aside className={`side ${menuOpen ? 'open' : ''}`}>
-          <button type="button" className="menu-btn" aria-label="Toggle menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
-            <span /><span /><span />
-          </button>
+        {menuOpen && <button type="button" className="drawer-scrim" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)} />}
+        <aside id="console-sidebar" className={`side ${menuOpen ? 'open' : ''}`}>
           <Link to="/" className="brand" aria-label="Kaizen home">
             KAIZEN
           </Link>
+          <button type="button" className="drawer-close" aria-label="Close navigation menu" onClick={() => setMenuOpen(false)}>×</button>
           <LayoutGroup id="nav">
             <motion.nav
               aria-label="Console"
@@ -195,23 +193,11 @@ function Shell(): JSX.Element {
           <ControlPlane />
         </aside>
         <main className="main">
+          <button type="button" className="menu-btn" aria-label="Open navigation menu" aria-expanded={menuOpen} aria-controls="console-sidebar" onClick={() => setMenuOpen((v) => !v)}>
+            <span /><span /><span />
+          </button>
           <header className="top">
-            <LayoutGroup id="steps">
-              <ol className="steps" aria-label="Lifecycle">
-                {STEPS.map((x, i) => {
-                  const alarm = i === 2 && faultActive;
-                  const cls = alarm ? 'alarm' : i === ph ? 'on' : i < ph ? 'past' : '';
-                  return (
-                    <li key={x} className={cls}>
-                      <Link to={STEP_PATHS[i] ?? '/overview'} aria-current={i === ph ? 'step' : undefined}>
-                        {(i === ph || alarm) && <motion.span layoutId={alarm ? 'alarmpill' : 'steppill'} className="pill" transition={{ duration: 0.35, ease }} />}
-                        <span>{x}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
-            </LayoutGroup>
+            <Link to="/" className="console-brand" aria-label="Kaizen home">KAIZEN</Link>
             <NetChip />
           </header>
           {REPLAY && <ReplayBanner />}

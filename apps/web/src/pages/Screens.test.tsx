@@ -13,6 +13,7 @@ import { Incidents, causeSteps, faultTimeline, logLine } from './Incidents';
 import { Networks } from './Networks';
 import { Deployments } from './Deployments';
 import { Settings } from './Settings';
+import { TopoView, type TopoEdge, type TopoNode } from '../components/Topology';
 import { okOp, primeApi, type ApiMock } from '../test-utils/mockApi';
 import { renderConsole } from '../test-utils/renderConsole';
 
@@ -173,5 +174,23 @@ describe('Settings', () => {
     renderConsole(<Settings />, { route: '/settings' });
     expect(await screen.findByText('binary not found')).toBeInTheDocument();
     expect(screen.getAllByText('Action needed').length).toBeGreaterThan(0);
+  });
+});
+
+describe('mobile layout contracts', () => {
+  it.each([320, 390])('keeps topology node controls in the scaled stage at %ipx', () => {
+    const nodes: TopoNode[] = Array.from({ length: 8 }, (_, index) => ({
+      id: `node-${index}`, num: String(index + 1).padStart(2, '0'), badge: 'Running',
+      tone: 'ok', role: 'validator', peers: 7, expected: 7, height: 12345,
+      ariaLabel: `validator ${index + 1}, Running`,
+    }));
+    const edges: TopoEdge[] = [];
+    const { container } = renderConsole(<TopoView nodes={nodes} edges={edges} testId="mobile-topology" />, { route: '/create' });
+    const stage = container.querySelector('[data-testid="mobile-topology"]');
+    const canvas = stage?.querySelector('.stage-canvas');
+    expect(stage).toHaveStyle({ '--topo-height': '257.4px' });
+    expect(canvas).toBeInTheDocument();
+    expect(canvas).not.toHaveAttribute('style');
+    expect(within(stage as HTMLElement).getAllByRole('button')).toHaveLength(8);
   });
 });
