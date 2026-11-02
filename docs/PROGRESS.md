@@ -1485,3 +1485,14 @@ K8s/Helm: untouched.
 **Not done / decisions**: `KaizenResilienceRegistry` NOT deployed (≈3.15 tPOT vs ≈85 tPOT for the last deploy, RSK-30). Pillar 1 (seeded drills) and BABE authorship / evidence-class weighting are roadmap (T-9.6, T-9.7). The v1 score still weights the operator-measured recovery time most.
 
 **Next step**: T-9.6 commit-reveal drill scheduling; fund the deployer before any registry deploy.
+
+
+---
+
+## 2026-11-02: T-3.7 mobile console usability (390px)
+
+**Work**: On `fix/mobile-ux-390px`, retain a compact scrollable lifecycle stepper while keeping the console drawer trigger fixed and reachable; remove the shrunken topology stage that overlapped the Failure Lab form; constrain the landing hero heading and allow the header action to reflow; let `/live` drill history scroll horizontally at a legible minimum table width. Desktop rules are unchanged.
+
+**Verification**: pending.
+
+**Status**: IMPLEMENTED, not yet VERIFIED.

@@ -267,7 +267,7 @@ export function Lab() {
 
   return (
     <>
-      <div className="lab-wrap">
+      <div className="lab-wrap" data-testid="failure-lab-layout">
         <div>
           <div className={`eyebrow ${done ? (result.ok ? 'ok' : 'bad') : ''}`}>{done ? (result.ok ? 'Recovered' : `Outcome: ${result.outcome}`) : `Failure Lab · ${network.name}`}</div>
           <p className="sub">Run controlled failures on the selected test network; compare live impact with verified recovery.</p>
@@ -288,7 +288,7 @@ export function Lab() {
               Break it on <span className="g">purpose</span>
             </h1>
           )}
-          <Topology net={vnet} sel={node.id} onSelect={setTarget} />
+          <div data-testid="failure-lab-topology"><Topology net={vnet} sel={node.id} onSelect={setTarget} /></div>
           {!network.designatedTest && <div className="wbox">This network is not a designated test network — the engine refuses faults on it (DEC-008).</div>}
         </div>
         <aside className="glass panel danger inj">

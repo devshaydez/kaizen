@@ -157,3 +157,8 @@ T-6.3/T-6.4 (K8s/Helm) carry the highest uncertainty (R-08/R-18, RSK-04/RSK-11).
 Although P2, a **feasibility spike** (minikube start + bare chart install of a
 single Portaldot pod) should be scheduled no later than mid-Phase 2 so blockers
 surface early; full implementation stays in Phase 6.
+
+
+## T-3.7: mobile console usability (390px)
+
+**Status: IMPLEMENTED, pending verification.** Fix the audited mobile navigation reachability on `/lab` and `/live`, Failure Lab topology/form separation, landing hero and header wrapping, and readable `/live` drill history. Preserve desktop layout and existing product scope. Add regression tests and verify with web tests, typecheck, lint, build, and a 390px browser check where available.

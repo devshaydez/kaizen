@@ -53,6 +53,13 @@ describe('App shell', () => {
     expect(within(screen.getByRole('navigation', { name: 'Console' })).getByRole('button', { name: 'Networks' })).toBeEnabled();
   });
 
+  it('keeps mobile shell navigation and the landing hero inside responsive wrappers', async () => {
+    renderConsole(<App />, { route: '/', withConsole: false });
+    expect(await screen.findByRole('heading', { name: /An upgrade can pass/ })).toBeInTheDocument();
+    expect(screen.getByLabelText('Landing')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
+  });
+
   it('landing shows only real commands and labels planned targets', async () => {
     renderConsole(<App />, { route: '/', withConsole: false });
     expect(screen.getAllByText('npx kaizen up').length).toBeGreaterThan(0);
