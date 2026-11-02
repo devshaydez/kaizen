@@ -350,6 +350,8 @@ a.ext{text-decoration:underline;text-underline-offset:3px}
   .side{position:fixed;inset:0 25% 0 0;max-width:300px;width:78vw;z-index:60;background:#14062e;box-shadow:20px 0 60px rgba(8,0,30,.6);padding:70px 20px 30px;transform:translateX(-105%);transition:transform .28s var(--e);overflow-y:auto}
   .side.open{transform:none}
   .side nav{flex-direction:column;gap:6px}.brand{margin:0 0 30px 14px}
+  .menu-btn{position:fixed;top:12px;right:12px}
+  .main{padding-top:68px}
   .split,.head,.ov,.dep,.lab-wrap,.hero2{grid-template-columns:1fr}.ov-events{grid-row:auto;grid-column:auto;margin-top:0}
   .stats,.lstats,.ftypes{grid-template-columns:1fr 1fr;row-gap:18px}.stat:nth-child(odd){padding-left:0;border-left:0}
   .wrap{padding:0 24px}.lnav nav{display:none}.cycle{height:auto}.cycle ol{grid-template-columns:1fr 1fr;row-gap:30px}.cycle svg.wave{display:none}.cycle li{padding-top:0}
@@ -381,8 +383,12 @@ a.ext{text-decoration:underline;text-underline-offset:3px}
   html,body{overflow-x:clip}
   .main,.wrap{padding-left:16px;padding-right:16px}
   .landing,.app{overflow-x:clip}
-  /* hide lifecycle stepper on phones; the drawer nav covers it */
-  .steps{display:none}
+  /* retain compact, scrollable lifecycle navigation beside the drawer */
+  .top{align-items:flex-start;gap:8px}
+  .steps{display:flex;flex:1;min-width:0;overflow-x:auto;flex-wrap:nowrap;gap:6px;padding:2px 2px 8px;scrollbar-width:thin}
+  .steps li{flex:0 0 auto}
+  .steps a{min-height:44px;padding:10px 12px}
+  .netchip{max-width:46%;overflow:hidden;text-overflow:ellipsis;align-self:flex-start}
   /* tap targets */
   .btn,.nav,.steps a{min-height:44px}
   .btn{white-space:normal}
@@ -390,8 +396,23 @@ a.ext{text-decoration:underline;text-underline-offset:3px}
   .livetbl,.page table{table-layout:fixed;width:100%}
   .livetbl td,.page td{word-break:break-word;overflow-wrap:anywhere}
   .mono,.num{overflow-wrap:anywhere;white-space:normal}
-  /* topology scales to viewport */
-  .stage{max-width:100%;transform:scale(.62);transform-origin:top left;margin-bottom:-90px}
+  /* topology owns its horizontal viewport and cannot overlap adjacent form cards */
+  .stage{width:100%;max-width:100%;height:auto;aspect-ratio:760 / 330;transform:none;margin:0;overflow:hidden}
+  .stage svg{width:100%;height:100%}
+  .lab-wrap{align-items:start;gap:18px}
+  .lab-wrap>.stage,.lab-wrap>div>.stage{margin-bottom:0}
+  .lab-wrap .inj{position:relative;z-index:1}
+  .lnav{align-items:center;flex-wrap:wrap;gap:10px 14px;padding-top:14px}
+  .lnav>.brand{margin:0;font-size:22px}
+  .lnav-cta{margin-left:auto;gap:6px}
+  .lnav-cta .btn{min-height:44px;padding:0 12px;font-size:12px;gap:8px}
+  .lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}
+  .hero{grid-template-columns:minmax(0,1fr);gap:24px;margin-top:24px}
+  .hero h1{font-size:clamp(32px,9vw,42px);line-height:1.08;overflow-wrap:break-word}
+  .hero h1 br{display:none}
+  .live-history-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .live-history-scroll .livetbl{table-layout:auto;min-width:700px}
+  .live-history-scroll .livetbl td{white-space:nowrap;word-break:normal;overflow-wrap:normal}
   /* scenario editor and saved rows stack, stop overflowing */
   .sc,.steps-ed,.sr,.li{grid-template-columns:1fr;width:100%;max-width:100%}
   .steps-ed .btn,.sr .btn,.li .btn{width:100%}

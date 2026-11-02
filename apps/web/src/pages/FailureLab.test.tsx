@@ -8,6 +8,7 @@ import '../test-utils/render';
 import { ApiError, apiClient } from '../api/client';
 import type { FaultRecord, ScenarioRecord, ScenarioRunRecord, ScenarioRunSummary } from '../api/types';
 import { Lab, quorumAfter } from './Lab';
+import { App } from '../App';
 import { Scenarios, draftFromRecord, inputFromDraft } from './Scenarios';
 import { primeApi, type ApiMock } from '../test-utils/mockApi';
 import { renderConsole } from '../test-utils/renderConsole';
@@ -44,6 +45,8 @@ describe('Failure Lab', () => {
     });
     renderConsole(<Lab />, { route: '/lab' });
     await screen.findByRole('heading', { name: 'Break it on purpose' });
+    expect(screen.getByTestId('failure-lab-layout')).toContainElement(screen.getByRole('button', { name: /Inject failure/ }));
+    expect(screen.getByTestId('failure-lab-layout')).toContainElement(screen.getByTestId('failure-lab-topology'));
     const kinds = screen.getByRole('group', { name: 'Fault type' });
     expect(within(kinds).getByRole('button', { name: /Disconnect peer/ })).toBeDisabled();
     expect(within(kinds).getByRole('button', { name: /Partition/ })).toBeDisabled();
@@ -60,6 +63,14 @@ describe('Failure Lab', () => {
     expect(api.executeFault).toHaveBeenCalledWith('net_1', { nodeId: 'net_1-alice', type: 'pause', options: { durationMs: 10_000 }, requestedBy: 'web' });
     expect(await screen.findByRole('heading', { name: 'Recovery verified' })).toBeInTheDocument();
     expect(screen.getByLabelText('Last result')).toHaveTextContent('Recovery independently verified');
+  });
+
+  it('keeps the mobile lifecycle navigation reachable while on the failure route', async () => {
+    renderConsole(<App />, { route: '/lab', withConsole: false });
+    await screen.findByRole('heading', { name: 'Break it on purpose' });
+    expect(screen.getByRole('navigation', { name: 'Console' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Networks' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Toggle menu' })).toBeInTheDocument();
   });
 
   it('renders a refused dry-run preflight from the 403 body', async () => {

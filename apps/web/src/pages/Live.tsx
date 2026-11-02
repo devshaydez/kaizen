@@ -429,6 +429,7 @@ export function Live(): JSX.Element {
       {items && (
         <section id="history" className="glass card" aria-label="Drill history">
           <div className="lab">Drill history ({items.length})</div>
+          <div className="live-history-scroll" role="region" aria-label="Drill history table" tabIndex={0}>
           <table className="livetbl">
             <thead>
               <tr>
@@ -463,6 +464,7 @@ export function Live(): JSX.Element {
               ))}
             </tbody>
           </table>
+          </div>
         </section>
       )}
     </>
