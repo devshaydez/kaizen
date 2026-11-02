@@ -432,19 +432,20 @@ a.ext{text-decoration:underline;text-underline-offset:3px}
   .lab-wrap{align-items:start;gap:18px}
   .lab-wrap>.stage,.lab-wrap>div>.stage{margin-bottom:0}
   .lab-wrap .inj{position:relative;z-index:1}
-  .lnav{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;justify-content:initial;column-gap:8px;row-gap:8px}
-  .lnav>.brand{margin:0;font-size:16px;letter-spacing:.12em;white-space:nowrap}
+  .lnav{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding-top:14px}
+  .lnav>.brand{margin:0;font-size:22px;letter-spacing:.2em;white-space:nowrap}
   .lnav nav{display:none}
-  .lnav .lnav-cta.hero-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:4px;width:100%;min-width:0;margin:0}
-  .lnav .lnav-cta.hero-actions>.btn{box-sizing:border-box;width:100%;min-width:0;min-height:34px;margin:0;padding:0 4px;font-size:10px;gap:0;white-space:nowrap}
-  .lnav .lnav-cta.hero-actions>.btn i{display:none}
+  .lnav-cta{margin-left:auto;gap:6px}
+  .lnav .lnav-cta .btn{min-height:44px;padding:0 12px;font-size:12px;gap:8px}
+  .lnav .lnav-cta .btn.ghost{display:none}
+  .lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}
   .top{display:flex;align-items:center;justify-content:flex-start;gap:8px}
   .top .net{margin-left:auto}
   .console-brand{display:none}
   .hero{grid-template-columns:minmax(0,1fr);gap:24px;margin-top:24px;padding-top:0;padding-bottom:0}
-  .hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px}
-  .hero-actions .btn{margin:0}
-  .hero-actions .copycmd{margin:0;max-width:100%}
+  .landing .hero .hero-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:8px}
+  .landing .hero .hero-actions>.btn{width:100%;justify-content:space-between;margin:0}
+  .landing .hero .hero-actions>.cmd{box-sizing:border-box;width:max-content;max-width:100%;justify-content:space-between;margin:0}
   .hero h1{font-size:clamp(32px,9vw,42px);line-height:1.08;overflow-wrap:break-word}
   .hero h1 br{display:none}
   .live-history-scroll{width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
