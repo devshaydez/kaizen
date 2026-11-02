@@ -282,18 +282,15 @@ export function Landing() {
       <div className="wrap">
         <section className="hero">
           <div>
-            <div className="eyebrow">Portaldot node operations</div>
+            <div className="eyebrow">Resilience platform for Portaldot nodes</div>
             <motion.h1
               initial={reduce ? false : { opacity: 0, y: 14, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{ duration: reduce ? 0 : 0.2, ease }}
             >
-              An upgrade can pass
-              <br />
-              and still break <span className="g">validators.</span>
+              Break it. Fix it. <span className="g">Prove it.</span>
             </motion.h1>
-            <p>Kaizen drills real Portaldot networks and verifies recovery with evidence before a passing upgrade can break validators.</p>
-            <p>Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.</p>
+            <p>Run controlled failures on real multi-node Portaldot networks, watch them recover, and publish operator-attested proof on-chain.</p>
             <div className="hero-actions">
               <Btn tone="pri" arrow onClick={() => nav(PUBLIC_DEMO ? '/live' : '/lab')}>
                 Run Drill Now
