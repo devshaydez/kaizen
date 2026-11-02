@@ -8,6 +8,7 @@ import '../test-utils/render';
 import { ApiError, apiClient } from '../api/client';
 import type { FaultRecord, ScenarioRecord, ScenarioRunRecord, ScenarioRunSummary } from '../api/types';
 import { Lab, quorumAfter } from './Lab';
+import { App } from '../App';
 import { Scenarios, draftFromRecord, inputFromDraft } from './Scenarios';
 import { primeApi, type ApiMock } from '../test-utils/mockApi';
 import { renderConsole } from '../test-utils/renderConsole';
@@ -65,8 +66,9 @@ describe('Failure Lab', () => {
   });
 
   it('keeps the mobile lifecycle navigation reachable while on the failure route', async () => {
-    renderConsole(<Lab />, { route: '/lab' });
+    renderConsole(<App />, { route: '/lab', withConsole: false });
     await screen.findByRole('heading', { name: 'Break it on purpose' });
+    expect(screen.getByRole('navigation', { name: 'Console' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Networks' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Toggle menu' })).toBeInTheDocument();
   });
