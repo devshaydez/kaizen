@@ -84,13 +84,15 @@ describe('App shell', () => {
     expect(screen.getByText(/Illustration — the console draws this view/)).toBeInTheDocument();
   });
 
-  it('restores the mobile landing header and stacked hero actions without changing desktop rules', async () => {
+  it('keeps the 390px landing hero CTAs stacked and proportioned, without changing desktop button rules', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
     renderConsole(<App />, { route: '/', withConsole: false });
     await screen.findByRole('heading', { name: /An upgrade can pass/ });
     const brand = screen.getByRole('link', { name: 'Kaizen home' });
     const ctas = document.querySelector('.lnav-cta');
     const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
     const phoneRules = mobileCss.slice(mobileCss.lastIndexOf('@media (max-width:640px)'));
+    const desktopCss = mobileCss.slice(0, mobileCss.indexOf('@media (max-width:1180px)'));
     expect(brand).toBeInTheDocument();
     expect(ctas).toHaveClass('hero-actions');
     expect(ctas?.children).toHaveLength(1);
@@ -101,8 +103,14 @@ describe('App shell', () => {
     expect(phoneRules).toContain('.lnav .lnav-cta .btn.ghost{display:none}');
     expect(phoneRules).toContain('.lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}');
     expect(phoneRules).toContain('.landing .hero .hero-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:8px}');
-    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn{width:100%;justify-content:space-between;margin:0}');
-    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:max-content;max-width:100%;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn{box-sizing:border-box;width:100%;min-height:54px;padding:0 26px;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn i{width:34px;height:34px;margin-right:-16px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:100%;max-width:100%;min-height:60px;gap:12px;padding:8px 8px 8px 18px;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd code{min-width:0;white-space:nowrap;font-size:clamp(12px,3.7vw,16px)}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd button{flex:none;min-height:44px;padding:0 14px;font-size:13px}');
+    expect(phoneRules).not.toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:max-content');
+    expect(desktopCss).toContain('.cmd{display:inline-flex;align-items:center;gap:18px;padding:8px 8px 8px 26px');
+    expect(desktopCss).toContain('.btn{display:inline-flex;align-items:center;justify-content:center;gap:16px;min-height:54px;padding:0 26px');
     expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Run Drill Now/ })).toBeInTheDocument();
     expect(within(document.querySelector('.landing .hero .hero-actions') as HTMLElement).getByRole('button', { name: 'Copy npx kaizen up' })).toBeInTheDocument();
