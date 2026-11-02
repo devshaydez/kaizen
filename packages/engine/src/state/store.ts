@@ -8,6 +8,7 @@
  */
 
 import type { ResilienceCertificate } from '../resilience/certificate';
+import type { KaizenAttestation } from '../resilience/attestation';
 import type { ChainEvidence } from '../resilience/evidence';
 import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
@@ -248,6 +249,18 @@ const MIGRATIONS: string[] = [
      signed_at TEXT NOT NULL
    );`,
   `CREATE INDEX IF NOT EXISTS resilience_certificates_validator_idx ON resilience_certificates(validator_id);`,
+  // A2: third-party attestations, one per (fingerprint, attester) pair.
+  //     INSERT OR REPLACE: re-attesting by the same key updates its record.
+  //     Public data only - never attester secrets.
+  `CREATE TABLE IF NOT EXISTS resilience_attestations (
+     fingerprint TEXT NOT NULL,
+     attester_address TEXT NOT NULL,
+     verdict TEXT NOT NULL,
+     checked_at TEXT NOT NULL,
+     attestation TEXT NOT NULL,
+     created_at TEXT NOT NULL,
+     PRIMARY KEY (fingerprint, attester_address)
+   );`,
 ];
 
 interface NetworkRow {
@@ -1163,6 +1176,32 @@ export class StateStore {
       )
       .all(...args) as { certificate: string }[];
     return rows.map((r) => JSON.parse(r.certificate) as ResilienceCertificate);
+  }
+
+  /** Stores (or replaces) an attestation for a fingerprint. Idempotent per attester key. */
+  insertResilienceAttestation(att: KaizenAttestation): boolean {
+    const r = this.db
+      .prepare(
+        `INSERT OR REPLACE INTO resilience_attestations
+         (fingerprint, attester_address, verdict, checked_at, attestation, created_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        att.certificateFingerprint,
+        att.attester.address,
+        att.verdict,
+        att.checkedAt,
+        JSON.stringify(att),
+        new Date().toISOString(),
+      );
+    return Number(r.changes) > 0;
+  }
+
+  listResilienceAttestations(fingerprint: string): KaizenAttestation[] {
+    const rows = this.db
+      .prepare('SELECT attestation FROM resilience_attestations WHERE fingerprint = ? ORDER BY checked_at DESC, attester_address')
+      .all(fingerprint) as { attestation: string }[];
+    return rows.map((r) => JSON.parse(r.attestation) as KaizenAttestation);
   }
 
   // -------------------------------------------------------------------------

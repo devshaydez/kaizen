@@ -50,6 +50,8 @@ import {
   parseCertificateBundle,
   verifyCertificateBundle,
   type CertificateVerification,
+  type KaizenAttestation,
+  ATTESTATION_SIGNER_ENV_KEY,
   ResilienceRegistryService,
   type ResilienceCertificate,
   type ResilienceChainJournalEntry,
@@ -1326,12 +1328,22 @@ export function buildProgram(deps: CliDependencies = {}): Command {
         } else {
           if (fingerprint === undefined) throw new KaizenError('INVALID_INPUT', 'give a fingerprint, or --bundle <file>');
           label = fingerprint;
-          v = await engine.resilience.verify(fingerprint);
+          v = await engine.resilience.verify(fingerprint, cmdOpts.rpc !== undefined ? { rpc: cmdOpts.rpc } : {});
         }
-        if (opts.json) printJson({ ok: v.status === 'verified', verification: v });
+        let attestations: KaizenAttestation[] = [];
+        if (cmdOpts.bundle !== undefined) {
+          attestations = parseCertificateBundle(fs.readFileSync(path.resolve(cmdOpts.bundle), 'utf8')).attestations ?? [];
+        } else if (fingerprint !== undefined) {
+          attestations = engine.resilience.listAttestations(fingerprint);
+        }
+        if (opts.json) printJson({ ok: v.status === 'verified', verification: v, attestations });
         else {
           console.log(`certificate ${label} — ${v.status.toUpperCase()}`);
           for (const r of v.reasons) console.log(`  ${r}`);
+          if (attestations.length > 0) {
+            console.log(`  attestations: ${attestations.length}`);
+            for (const a of attestations) console.log(`    ${a.attester.address}  ${a.verdict}  checked ${a.checkedAt}`);
+          }
         }
         if (v.status !== 'verified') process.exitCode = 1;
       });
@@ -1361,9 +1373,30 @@ export function buildProgram(deps: CliDependencies = {}): Command {
         if (scores.length === 0) console.log('No certified validators.');
         for (const s of scores) {
           console.log(
-            `${s.validatorId.padEnd(14)} ${String(s.score).padStart(3)}/100  runs=${s.runs} survived=${s.faultsSurvived} quality=${s.quality.toFixed(3)} confidence=${s.confidence.toFixed(3)}${s.excluded.length ? `  excluded=${s.excluded.length} (integrity failed)` : ''}`,
+            `${s.validatorId.padEnd(14)} ${String(s.score).padStart(3)}/100  runs=${s.runs} survived=${s.faultsSurvived} quality=${s.quality.toFixed(3)} confidence=${s.confidence.toFixed(3)}${s.excluded.length ? `  excluded=${s.excluded.length} (integrity failed)` : ''}${s.notes.length > 0 ? `  notes=${s.notes.length}` : ''}`,
           );
         }
+      });
+    });
+
+  program
+    .command('attest <fingerprint>')
+    .description(
+      `Re-verify a stored certificate against the chain and sign the result with an independent attester key (${ATTESTATION_SIGNER_ENV_KEY}). verdict=verified only on a full chain match; otherwise mismatch. Does NOT spend tPOT`,
+    )
+    .option('--rpc <url>', 'HTTP RPC endpoint to re-fetch block hashes from (omitted: the running network, else unverifiable -> mismatch)')
+    .action(async (fingerprint: string, cmdOpts: { rpc?: string }) => {
+      await run(async (engine, opts) => {
+        const att = await engine.resilience.attest(fingerprint, cmdOpts.rpc !== undefined ? { rpc: cmdOpts.rpc } : {});
+        if (opts.json) {
+          printJson({ ok: true, attestation: att });
+          return;
+        }
+        console.log(`attestation ${att.certificateFingerprint}`);
+        console.log(`  verdict  : ${att.verdict.toUpperCase()}`);
+        console.log(`  checkedAt: ${att.checkedAt}`);
+        console.log(`  attester : ${att.attester.address}`);
+        if (att.verdict !== 'verified') process.exitCode = 1;
       });
     });
 

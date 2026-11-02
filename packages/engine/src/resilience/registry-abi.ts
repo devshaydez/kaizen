@@ -27,6 +27,7 @@ export const EVIDENCE_FLAGS = {
   devKey: 2,
   seededDrill: 4, // certificate carries a commit-reveal drill record
   chainObserved: 8, // a BABE author was decoded for an observed block
+  independentlyAttested: 0x10, // A2: a valid attestation by a key other than the signer exists
 } as const;
 
 export const CERTIFICATE_RECORDED_TOPIC = keccakAsHex(RESILIENCE_REGISTRY_SIGNATURES.certificateRecordedEvent, 256);
@@ -98,13 +99,17 @@ export function encodeRecordCall(i: RecordCallInput): string {
 
 /** Record-call input for a certificate and its computed score. */
 /** evidenceFlags for a certificate, derived only from what it actually carries. */
-export function evidenceFlagsFor(cert: ResilienceCertificate): number {
+// evidenceFlags for a certificate, derived only from what it actually
+// carries. attested is set ONLY for a valid attestation (checkAttestation)
+// by a key other than the signer with verdict=verified (A2).
+export function evidenceFlagsFor(cert: ResilienceCertificate, attested = false): number {
   const observed = cert.chain.observations.some((o) => o.best.author !== undefined || o.finalized.author !== undefined);
   return (
     EVIDENCE_FLAGS.chainBound |
     (cert.signature.dev ? EVIDENCE_FLAGS.devKey : 0) |
     (cert.drill ? EVIDENCE_FLAGS.seededDrill : 0) |
-    (observed ? EVIDENCE_FLAGS.chainObserved : 0)
+    (observed ? EVIDENCE_FLAGS.chainObserved : 0) |
+    (attested ? EVIDENCE_FLAGS.independentlyAttested : 0)
   );
 }
 

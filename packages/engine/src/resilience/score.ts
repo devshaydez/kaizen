@@ -178,7 +178,13 @@ export function evidenceClassFactor(cls: EvidenceClass): number {
 export function classifyEvidence(facts: {
   signatureValid: boolean;
   chainVerified: boolean;
+  // True when at least one VALID attestation by a verifier key other than
+  // the certificate signer recorded verdict=verified (A2). Counts the same
+  // as signed-chain-verified; never overrides an invalid signature.
+  independentlyAttested?: boolean;
 }): EvidenceClass {
   if (!facts.signatureValid) return "unsigned";
-  return facts.chainVerified ? "signed-chain-verified" : "signed-local";
+  return facts.chainVerified || facts.independentlyAttested === true
+    ? "signed-chain-verified"
+    : "signed-local";
 }

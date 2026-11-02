@@ -35,8 +35,10 @@ export interface BlockRef {
   number: number;
   /** 0x-prefixed 32-byte block hash as returned by the node. */
   hash: string;
-  /** BABE authorship decoded from the block's header digest, when available. */
-  author?: { kind: string; authorityIndex: number; slot: string };
+  author?: { kind: string; authorityIndex: number; slot: string; authorityId?: string };
+  /** GRANDPA context queried at this exact block hash. */
+  grandpaSetId?: string;
+  grandpaAuthoritiesHash?: string;
 }
 
 export interface ChainObservation {
@@ -45,6 +47,11 @@ export interface ChainObservation {
   at: string;
   best: BlockRef;
   finalized: BlockRef;
+  /** GRANDPA context at each head, from state at its exact hash. */
+  bestGrandpaSetId?: string;
+  bestGrandpaAuthoritiesHash?: string;
+  finalizedGrandpaSetId?: string;
+  finalizedGrandpaAuthoritiesHash?: string;
 }
 
 export interface ChainEvidenceGap {
@@ -142,7 +149,13 @@ export function computeRecoveryMetrics(input: {
       ? Math.max(0, ms(recoveredAt) - ms(anchor))
       : null;
 
-  const gapSamples = [...during, ...after];
+  const gapSamples = [...during, ...after].filter((o) => {
+    const bestSet = o.bestGrandpaSetId;
+    const finSet = o.finalizedGrandpaSetId;
+    if (bestSet === undefined && finSet === undefined) return true;
+    return bestSet === finSet &&
+      o.bestGrandpaAuthoritiesHash === o.finalizedGrandpaAuthoritiesHash;
+  });
   const finalityGapBlocks = gapSamples.length
     ? gapSamples.reduce(
         (m, o) => Math.max(m, o.best.number - o.finalized.number),
@@ -152,8 +165,8 @@ export function computeRecoveryMetrics(input: {
 
   // Blocks missed over the fault window: last pre-fault observation → last
   // during-fault observation (taken just before the fault is lifted).
-  const start = pre.at(-1);
-  const end = during.at(-1);
+  const start = pre[pre.length - 1];
+  const end = during[during.length - 1];
   let blocksMissed: number | null = null;
   if (start && end) {
     const elapsed = ms(end.at) - ms(start.at);
@@ -233,6 +246,10 @@ export class ChainEvidenceRecorder {
         at: this.now().toISOString(),
         best,
         finalized,
+        ...(best.grandpaSetId !== undefined ? { bestGrandpaSetId: best.grandpaSetId } : {}),
+        ...(best.grandpaAuthoritiesHash !== undefined ? { bestGrandpaAuthoritiesHash: best.grandpaAuthoritiesHash } : {}),
+        ...(finalized.grandpaSetId !== undefined ? { finalizedGrandpaSetId: finalized.grandpaSetId } : {}),
+        ...(finalized.grandpaAuthoritiesHash !== undefined ? { finalizedGrandpaAuthoritiesHash: finalized.grandpaAuthoritiesHash } : {}),
       };
       this.observations.push(o);
       return o;

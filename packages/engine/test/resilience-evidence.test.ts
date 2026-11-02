@@ -4,6 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { xxhashAsU8a } from '@polkadot/util-crypto';
 import {
   ChainEvidenceRecorder,
   ChainUnreachableError,
@@ -16,6 +17,8 @@ import {
 
 const h = (n: number, fork = 0): string => `0x${(n * 16 + fork).toString(16).padStart(64, '0')}`;
 const ref = (n: number): BlockRef => ({ number: n, hash: h(n) });
+const storageKey = (pallet: string, item: string): string =>
+  `0x${Buffer.from(xxhashAsU8a(Buffer.from(pallet), 128)).toString('hex')}${Buffer.from(xxhashAsU8a(Buffer.from(item), 128)).toString('hex')}`;
 const at = (s: number): string => new Date(Date.UTC(2026, 9, 24, 0, 0, s)).toISOString();
 const obs = (phase: ChainObservation['phase'], s: number, best: number, fin: number): ChainObservation => ({
   phase,
@@ -56,6 +59,51 @@ describe('computeRecoveryMetrics', () => {
     expect(m.timeToRecoverMs).toBeNull();
     expect(m.recoveredAt).toBeNull();
     expect(m.finalityGapBlocks).toBe(22);
+  });
+
+  it('does not report a cross-set best/finalized height gap as validator lag', () => {
+    const m = computeRecoveryMetrics({
+      observations: [{
+        ...obs('during-fault', 30, 120, 98),
+        bestGrandpaSetId: '9',
+        bestGrandpaAuthoritiesHash: 'new-set',
+        finalizedGrandpaSetId: '8',
+        finalizedGrandpaAuthoritiesHash: 'old-set',
+      }],
+      faultStartedAt: at(1),
+      faultEndedAt: at(30),
+    });
+    expect(m.finalityGapBlocks).toBeNull();
+  });
+
+  it('measures finality lag when both heads share the same GRANDPA context', () => {
+    const m = computeRecoveryMetrics({
+      observations: [{
+        ...obs('during-fault', 30, 120, 98),
+        bestGrandpaSetId: '9',
+        bestGrandpaAuthoritiesHash: 'set-nine',
+        finalizedGrandpaSetId: '9',
+        finalizedGrandpaAuthoritiesHash: 'set-nine',
+      }],
+      faultStartedAt: at(1),
+      faultEndedAt: at(30),
+    });
+    expect(m.finalityGapBlocks).toBe(22);
+  });
+
+  it('excludes best/finalized gaps spanning a GRANDPA set or authority change', () => {
+    const transition = computeRecoveryMetrics({
+      observations: [{
+        ...obs('during-fault', 30, 120, 98),
+        bestGrandpaSetId: '9',
+        bestGrandpaAuthoritiesHash: 'same-set-id-new-authorities',
+        finalizedGrandpaSetId: '9',
+        finalizedGrandpaAuthoritiesHash: 'old-authorities',
+      }],
+      faultStartedAt: at(1),
+      faultEndedAt: at(30),
+    });
+    expect(transition.finalityGapBlocks).toBeNull();
   });
 
   it('returns null metrics when the observations needed are missing', () => {
@@ -208,6 +256,11 @@ describe('createHttpChainReader', () => {
       let result: unknown = null;
       if (method === 'chain_getBlockHash') result = chain[params[0] as number] ?? null;
       if (method === 'chain_getFinalizedHead') result = chain[finalized];
+      if (method === 'state_getStorage') {
+        const key = params[0] as string;
+        if (key === storageKey('Grandpa', 'CurrentSetId')) result = `0x${'01'}${'00'.repeat(7)}`;
+        if (key === storageKey('Grandpa', 'Authorities')) result = `0x04${'44'.repeat(32)}${'0100000000000000'}`;
+      }
       if (method === 'chain_getHeader') {
         const hash = params[0] as string | undefined;
         const num = hash ? Number(Object.entries(chain).find(([, v]) => v === hash)?.[0]) : best;
@@ -220,7 +273,7 @@ describe('createHttpChainReader', () => {
   it('reads best/finalized heads and block hashes by number', async () => {
     const chain = { 0: h(0), 7: h(7), 9: h(9) };
     const r = createHttpChainReader('http://127.0.0.1:1', { fetch: fakeFetch(chain, 9, 7) });
-    await expect(r.readHeads()).resolves.toEqual({ best: ref(9), finalized: ref(7), genesisHash: h(0) });
+    await expect(r.readHeads()).resolves.toMatchObject({ best: { ...ref(9), grandpaSetId: "1", grandpaAuthoritiesHash: expect.any(String) }, finalized: { ...ref(7), grandpaSetId: "1", grandpaAuthoritiesHash: expect.any(String) }, genesisHash: h(0) });
     await expect(r.blockHashAt(7)).resolves.toBe(h(7));
     await expect(r.blockHashAt(8)).resolves.toBeNull();
   });

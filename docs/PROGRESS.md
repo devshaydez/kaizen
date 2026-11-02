@@ -1580,5 +1580,7 @@ K8s/Helm: untouched.
 - A1 verified: resilience-live run 40584394253 (x64, cf01ae6) is green and uploads `certificate.bundle.json`: one certificate with the drill record, BABE author on 5 observations, GRANDPA finality gap (4 blocks) and 11 block hashes re-fetched from the live node → `verified`.
 - A2 (partial): `engine.resilience.scoreV2` and `kaizen score --v2 [--verify-chain]` weight each certified run by its evidence class (the signed certificate is the attestation; chain re-verification lifts signed-local 0.7 to signed-chain-verified 1.0; an unreachable network never upgrades). Not built yet: third-party attestations signed by someone other than the certificate signer, and the attestation spec document.
 
+Verified: unit workflow run 40796334674 GREEN on ubuntu x64 (502+ tests incl. the new attestation suites). tsc/eslint clean. NOT yet verified on-chain: anchoring a certificate WITH the 0x10 flag (needs a real drill + anchor run, next: resilience-live on this branch). Next: A3 live-first web app (`git checkout -b feat/live-web feat/ink-registry && git merge origin/main`), then A4 honest labels.
+
 ## 2026-11-01 01:00 WAT
 - Merged origin/main (web deploy fixes, mobile UX, replay-mode console) into feat/ink-registry; conflicts in certificate/verify (kept metadata check plus drill check), README and docs (kept the newer branch text). tsc clean, certificate tests 12/12. Next: A3 live-first web app.

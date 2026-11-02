@@ -12,6 +12,7 @@
 
 import { KaizenError } from '../errors';
 import type { ScenarioRunRecord } from '../scenario/run-types';
+import type { KaizenAttestation } from './attestation';
 import type { ResilienceCertificate } from './certificate';
 import type { ChainReader } from './rpc';
 import { verifyCertificate, type CertificateVerification } from './verify';
@@ -22,13 +23,21 @@ export interface CertificateBundle {
   kaizenCertificateBundle: typeof KAIZEN_BUNDLE_VERSION;
   certificate: ResilienceCertificate;
   run: ScenarioRunRecord;
+  // A2: optional third-party attestations; verifiable with checkAttestation.
+  attestations?: KaizenAttestation[];
 }
 
 export function buildCertificateBundle(
   certificate: ResilienceCertificate,
   run: ScenarioRunRecord,
+  attestations?: KaizenAttestation[],
 ): CertificateBundle {
-  return { kaizenCertificateBundle: KAIZEN_BUNDLE_VERSION, certificate, run };
+  return {
+    kaizenCertificateBundle: KAIZEN_BUNDLE_VERSION,
+    certificate,
+    run,
+    ...(attestations && attestations.length > 0 ? { attestations } : {}),
+  };
 }
 
 /** Parse and shape-check bundle JSON; throws KaizenError('INVALID_INPUT') on anything malformed. */
@@ -68,6 +77,19 @@ export function parseCertificateBundle(text: string): CertificateBundle {
       'INVALID_INPUT',
       'bundle.run is missing or does not match certificate.runId',
     );
+  }
+  if (
+    b.attestations !== undefined &&
+    (!Array.isArray(b.attestations) ||
+      b.attestations.some(
+        (a) =>
+          !a ||
+          typeof a !== 'object' ||
+          typeof (a as KaizenAttestation).certificateFingerprint !== 'string' ||
+          !a.attester,
+      ))
+  ) {
+    throw new KaizenError('INVALID_INPUT', 'bundle.attestations is malformed');
   }
   return b as CertificateBundle;
 }

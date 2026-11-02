@@ -1,0 +1,25 @@
+name: unit
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'packages/**'
+      - 'apps/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vitest.config.mts'
+      - '.github/workflows/unit.yml'
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx tsc -p packages/engine --noEmit
+      - run: npm run build
+      - run: npx tsc -p packages/cli --noEmit
+      - run: npm test

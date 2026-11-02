@@ -21,6 +21,7 @@ import { httpUrlForPort } from '../process/args';
 import type { StateStore } from '../state/store';
 import type { NodeRecord } from '../types';
 import { buildCertificateBundle, type CertificateBundle } from './bundle';
+import { checkAttestation, issueAttestation, loadAttestationSigner, type KaizenAttestation } from './attestation';
 import { issueCertificate, checkCertificateSignature, type ResilienceCertificate } from './certificate';
 import { ChainEvidenceRecorder, type ChainEvidence } from './evidence';
 import { createHttpChainReader, type ChainReader } from './rpc';
@@ -243,8 +244,44 @@ export class ResilienceService {
     return [...new Set(this.store.listResilienceCertificates().map((c) => c.validatorId))].sort();
   }
 
+  // A2: attest a certificate as an INDEPENDENT verifier. Re-verifies it
+  // against chain (verdict verified only on a full match), then signs
+  // with the attester key (KAIZEN_ATTESTER_SURI or _FILE), which must
+  // differ from the certificate signer.
+  async attest(fingerprint: string, options: { rpc?: string } = {}): Promise<KaizenAttestation> {
+    const cert = this.getCertificate(fingerprint);
+    const run = this.store.getScenarioRun(cert.runId);
+    const attester = await loadAttestationSigner(this.opts.env ?? process.env);
+    const reader = options.rpc !== undefined ? createHttpChainReader(options.rpc) : this.readerForNetwork(cert.networkId);
+    const att = await issueAttestation({ certificate: cert, run, attester, reader });
+    this.store.insertResilienceAttestation(att);
+    return att;
+  }
+
+  // Stored attestations for a fingerprint (unchecked; use checkAttestation).
+  listAttestations(fingerprint: string): KaizenAttestation[] {
+    return this.store.listResilienceAttestations(fingerprint);
+  }
+
+  // Validity of a certificate attestations (A2). A certificate counts as
+  // attested only with at least one valid attestation by a DIFFERENT key
+  // than the signer with verdict=verified. Invalid or same-key ones are
+  // ignored and reported in notes.
+  private async attestationsFor(cert: ResilienceCertificate, asOf: Date): Promise<{ attested: boolean; notes: string[] }> {
+    const notes: string[] = [];
+    let attested = false;
+    for (const att of this.store.listResilienceAttestations(cert.fingerprint)) {
+      const check = await checkAttestation(att, cert, { now: asOf });
+      if (check.valid) {
+        if (check.verdict === "verified") attested = true;
+      } else {
+        notes.push(`${cert.fingerprint}: attestation by ${att.attester.address} excluded (${check.reason})`);
+      }
+    }
+    return { attested, notes };
+  }
   /** v1 score over certificates whose offline integrity check passes. */
-  async score(validatorId: string, asOf: Date = new Date()): Promise<ResilienceScore & { excluded: string[] }> {
+  async score(validatorId: string, asOf: Date = new Date()): Promise<ResilienceScore & { excluded: string[]; notes: string[] }> {
     return this.scoreCertificates(validatorId, asOf, false);
   }
 
@@ -258,7 +295,7 @@ export class ResilienceService {
   async scoreV2(
     validatorId: string,
     options: { asOf?: Date; verifyChain?: boolean } = {},
-  ): Promise<ResilienceScore & { excluded: string[] }> {
+  ): Promise<ResilienceScore & { excluded: string[]; notes: string[] }> {
     return this.scoreCertificates(validatorId, options.asOf ?? new Date(), true, options.verifyChain === true);
   }
 
@@ -267,9 +304,10 @@ export class ResilienceService {
     asOf: Date,
     withEvidenceClass: boolean,
     verifyChain = false,
-  ): Promise<ResilienceScore & { excluded: string[] }> {
+  ): Promise<ResilienceScore & { excluded: string[]; notes: string[] }> {
     const inputs: ScoredRunInput[] = [];
     const excluded: string[] = [];
+    const notes: string[] = [];
     for (const cert of this.store.listResilienceCertificates({ validatorId })) {
       let run;
       try {
@@ -283,11 +321,13 @@ export class ResilienceService {
         excluded.push(cert.fingerprint);
         continue;
       }
+      const attestation = await this.attestationsFor(cert, asOf);
+      notes.push(...attestation.notes);
       let evidenceClass: EvidenceClass | undefined;
       if (withEvidenceClass) {
         const chainVerified =
           verifyChain && (await verifyChainEvidence(cert.chain, this.readerForNetwork(cert.networkId))).status === 'verified';
-        evidenceClass = classifyEvidence({ signatureValid: true, chainVerified });
+        evidenceClass = classifyEvidence({ signatureValid: true, chainVerified, independentlyAttested: attestation.attested });
       }
       inputs.push({
         runId: cert.runId,
@@ -300,7 +340,7 @@ export class ResilienceService {
         ...(evidenceClass ? { evidenceClass } : {}),
       });
     }
-    return { ...computeResilienceScore(validatorId, inputs, asOf), excluded };
+    return { ...computeResilienceScore(validatorId, inputs, asOf), excluded, notes };
   }
 
   /** Reader for a network's chain, or null when no node is running (offline). */
@@ -316,12 +356,13 @@ export class ResilienceService {
   /** Certificate + its run in one portable, offline-verifiable document. */
   exportBundle(fingerprint: string): CertificateBundle {
     const cert = this.getCertificate(fingerprint);
-    return buildCertificateBundle(cert, this.store.getScenarioRun(cert.runId));
+    return buildCertificateBundle(cert, this.store.getScenarioRun(cert.runId), this.store.listResilienceAttestations(fingerprint));
   }
 
-  async verify(fingerprint: string): Promise<CertificateVerification> {
+  async verify(fingerprint: string, options: { rpc?: string } = {}): Promise<CertificateVerification> {
     const cert = this.getCertificate(fingerprint);
     const run = this.store.getScenarioRun(cert.runId);
-    return verifyCertificate(cert, run, this.readerForNetwork(cert.networkId));
+    const reader = options.rpc !== undefined ? createHttpChainReader(options.rpc) : this.readerForNetwork(cert.networkId);
+    return verifyCertificate(cert, run, reader);
   }
 }

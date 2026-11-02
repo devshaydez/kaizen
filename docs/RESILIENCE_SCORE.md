@@ -177,5 +177,7 @@ format stays forward-compatible.
   "class = chain-bound".
 - `KaizenResilienceRegistry` stores an `evidenceFlags` bitfield per
   certificate (bit 0 chain-bound hashes, bit 1 dev key, bit 2 seeded drill,
-  bit 3 chain-observed authorship) so v2 certificates fit the same
+  bit 3 chain-observed authorship, bit 4 `0x10` independently attested —
+  a valid attestation by a key other than the signer exists, see
+  docs/ATTESTATION_SPEC.md) so v2 certificates fit the same
   contract; v1 writers set only bits 0–1.

@@ -40,6 +40,24 @@ export {
   resilienceSignerConfigured,
 } from './signer';
 export type { LoadResilienceSignerOptions, ResilienceSigner, ResilienceSignerSource } from './signer';
+export {
+  ATTESTATION_MAX_AGE_DAYS,
+  ATTESTATION_SIGNER_ENV_KEY,
+  ATTESTATION_SIGNER_FILE_ENV_KEY,
+  ATTESTATION_VERDICTS,
+  KAIZEN_ATTESTATION_VERSION,
+  attestationMessage,
+  checkAttestation,
+  issueAttestation,
+  loadAttestationSigner,
+} from './attestation';
+export type {
+  AttestationCheck,
+  AttestationSignature,
+  AttestationSigner,
+  AttestationVerdict,
+  KaizenAttestation,
+} from './attestation';
 export { verifyCertificate, verifyChainEvidence } from './verify';
 export {
   KAIZEN_BUNDLE_VERSION,
