@@ -267,8 +267,8 @@ export function Landing() {
             </a>
           </nav>
           <span className="lnav-cta hero-actions">
-            {PUBLIC_DEMO && <Btn onClick={() => nav('/live')}>See a live drill</Btn>}
-            <Btn tone="pri" arrow onClick={() => nav('/overview')}>
+            {PUBLIC_DEMO && <Btn small onClick={() => nav('/live')}>See a live drill</Btn>}
+            <Btn tone="pri" arrow small onClick={() => nav('/overview')}>
               Launch console
             </Btn>
           </span>
