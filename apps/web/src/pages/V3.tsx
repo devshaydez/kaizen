@@ -15,7 +15,8 @@ import { Btn, ErrorBox, Seg, ease } from '../components/ui';
 import { formatTs, shortId } from '../components/fmt';
 import { blockUrl, formatTokens } from '../lib/model';
 import { useEventsContext } from '../state/EventsContext';
-import { useAsync } from '../state/useAsync';
+import { useAsync, useInterval } from '../state/useAsync';
+import { REPLAY } from '../lib/mode';
 
 /** Observed V3 costs (T-8.2 live run, see docs/RISKS.md RSK-30). */
 export const CONTRACT_ANCHOR_COST_NOTE =
@@ -85,6 +86,15 @@ export function V3() {
   }, [completed, runId]);
   const hash = useAsync(() => (runId ? apiClient.runHash(runId) : Promise.resolve(null)), [runId]);
 
+  // Refresh the existing backend RPC/monitor reads so head, endpoint health,
+  // signer balance, anchors, and run history do not wait for manual probing.
+  useInterval(() => {
+    probe.reload();
+    status.reload();
+    anchors.reload();
+    runs.reload();
+  }, 30_000);
+
   // Live anchor lifecycle (v3.anchor events) → refresh the evidence list.
   useEffect(() => {
     const fresh = events.filter((e) => e.seq > seen);
@@ -135,7 +145,7 @@ export function V3() {
             Portaldot V3 test network{st?.chainName ? ` · ${st.chainName}` : ''}
           </div>
           <h1>Proof on chain</h1>
-          <p>Finished Failure Lab runs are fingerprinted (SHA-256 of the canonical run record) and anchored on the V3 test network.</p>
+          <p>Anchor completed drill evidence on Portaldot V3, then verify each record against the chain.</p>
         </div>
         <div className="actions">
           <Btn onClick={probe.reload} disabled={probe.loading}>
@@ -162,7 +172,7 @@ export function V3() {
             <>
               <div className="kv">
                 <span>Signer</span>
-                <b className="mono-s">{st.signer.configured ? st.signer.address : 'not configured (KAIZEN_V3_SIGNER_SURI)'}</b>
+                <b className="mono-s">{st.signer.configured ? st.signer.address : REPLAY ? 'none — replay is read-only (the browser never signs)' : 'not configured (KAIZEN_V3_SIGNER_SURI)'}</b>
               </div>
               <div className="kv">
                 <span>Free balance</span>
@@ -182,7 +192,15 @@ export function V3() {
             const href = blockUrl(template, c.blockHash);
             return (
               <div className="kv" key={c.address}>
-                <span>Deployed</span>
+                <span>
+                  Deployed
+                  {c.name ? (
+                    <>
+                      <br />
+                      <small className="sub">{c.name}</small>
+                    </>
+                  ) : null}
+                </span>
                 <b className="mono-s">
                   {href ? (
                     <a className="ext" href={href} target="_blank" rel="noreferrer">

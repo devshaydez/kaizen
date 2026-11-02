@@ -45,6 +45,8 @@ import type {
   V3StatusResponse,
   V3VerifyResponse,
 } from './types';
+import { REPLAY } from '../lib/mode';
+import { createReplayFetch } from './replay/fetch';
 
 /** Stable machine-readable failure classification for the UI. */
 export type ApiErrorCode =
@@ -433,7 +435,14 @@ export const V3_READ_TIMEOUT_MS = 60_000;
 /** An anchor waits for inclusion + finality (server bounds: 120s + 60s). */
 export const V3_ANCHOR_TIMEOUT_MS = 240_000;
 
-/** Default client: same-origin (dev server proxies /api → backend). */
-export const apiClient = new KaizenApiClient({
-  baseUrl: import.meta.env?.['VITE_KAIZEN_API'] ?? '',
-});
+/**
+ * Default client: same-origin (dev server proxies /api → backend). In the
+ * hosted build (VITE_KAIZEN_PUBLIC=1) there is no engine: the same client
+ * reads REAL recorded drills through the replay fetch adapter, and every
+ * mutating request is refused with REPLAY_MODE (src/api/replay).
+ */
+export const apiClient = REPLAY
+  ? new KaizenApiClient({ baseUrl: '', fetchImpl: createReplayFetch(), timeoutMs: 60_000 })
+  : new KaizenApiClient({
+      baseUrl: import.meta.env?.['VITE_KAIZEN_API'] ?? '',
+    });

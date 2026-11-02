@@ -8,7 +8,7 @@ never a mock.** Mocks exist only for pure-logic unit tests.
 
 | Layer | Tool | Scope | Gated by |
 |---|---|---|---|
-| Unit | vitest | engine pure logic (topology models, port allocator, scenario validation, state machine, safeguards) | nothing — runs everywhere |
+| Unit | vitest | engine pure logic (topology models, port allocator, scenario validation, state machine, safeguards) | nothing: runs everywhere |
 | Integration | vitest + real `portaldot_dev` | process manager, RPC client, network service, failure injection, incident detection, adapters | `KAIZEN_TEST_LIVE=1` + binary present in `.kaizen/bin` |
 | E2E | scripted CLI/API flows (Playwright later for UI) | full lifecycle CREATE→MONITOR→BREAK→DIAGNOSE→RECOVER→DEPLOY | `KAIZEN_TEST_E2E=1` |
 | Contract | supertest (API), JSON-schema of `--json` CLI output | API/CLI surface stability | runs with unit suite |
@@ -51,9 +51,9 @@ Full detail in `docs/TECHNICAL_RESEARCH.md`.
 | 11 | K8s tooling | `kubectl cluster-info`, `helm list`, `which minikube` | clients present; no cluster reachable; minikube installed (R-18) |
 
 Negative/edge findings recorded honestly:
-- `--tmp` + `--base-path` are mutually exclusive (clap error) — engine must
+- `--tmp` + `--base-path` are mutually exclusive (clap error): engine must
   never emit both.
-- `pkill -f <pattern-that-matches-own-shell>` footgun during probes — noted for
+- `pkill -f <pattern-that-matches-own-shell>` footgun during probes: noted for
   test-harness design (use exact-name kills).
 
 ## 4. Tests Executed in Phase 1 (unit + live suite + CLI smoke)
@@ -63,17 +63,17 @@ Run 2026-10-09 on the machine described above. Gates before any commit:
 `KAIZEN_TEST_LIVE=1 npm run test:integration` (live suite). The live suites
 **skip** (never report passing) without the env var.
 
-### 4.1 Unit suite — `npm test` (no network, no binary, fast)
+### 4.1 Unit suite: `npm test` (no network, no binary, fast)
 
 32 tests / 6 files in `packages/engine/test/` and `packages/cli/test/`:
 `buildNodeArgs` + `assertSafeArgs` (forbidden `--tmp`/external-RPC flags),
 StateStore (migrations, networks/nodes/operations CRUD, operation→network
 linking), PortAllocator (probe-bind, range/stride behavior, exhaustion),
 event bus (subscribe/unsubscribe), BinaryManager (TOFU manifest logic with
-injected fetch/spawn — no real download), `isPidAlive` guard (pid ≤ 0 never
-alive — 0/-1 have process-group kill semantics), log tail, pid file path.
+injected fetch/spawn: no real download), `isPidAlive` guard (pid ≤ 0 never
+alive: 0/-1 have process-group kill semantics), log tail, pid file path.
 
-### 4.2 Live suite — `KAIZEN_TEST_LIVE=1 npm run test:integration`
+### 4.2 Live suite: `KAIZEN_TEST_LIVE=1 npm run test:integration`
 
 Real `portaldot_dev` processes; isolated temp dirs per suite
 (`os.tmpdir()/kaizen-it/…`); ports from the engine allocator; shared binary
@@ -102,17 +102,17 @@ stop) → `remove` → `list` empty. **13/13 steps pass.**
 
 ### 4.4 Bugs the live suite caught (fixed; regression-tested)
 
-Honesty demands recording these — the live layer earned its keep:
+Honesty demands recording these: the live layer earned its keep:
 
 1. `withTimeout()` resolved `void`, so "graceful stop" checks were always
    falsy → every successful stop escalated to SIGKILL *and* reported
    `STOP_TIMEOUT`. Fixed + manager unit tests.
-2. `new WsProvider(url, false)` disables auto-connect — `ApiPromise.create`
+2. `new WsProvider(url, false)` disables auto-connect: `ApiPromise.create`
    hangs forever. Fixed (numeric retry delay).
 3. `key generate-node-key` prints the peer id to **STDERR**; the engine
    parsed stdout only → two-node create failed. Fixed (parse both streams;
    never log the key file content).
-4. `api.provider` is `undefined` on @polkadot/api v17 — raw
+4. `api.provider` is `undefined` on @polkadot/api v17: raw
    `system_localPeerId` always failed (surfaced as a `null` peer id with a
    warning). Fixed (client holds the `WsProvider` reference).
 5. `isPidAlive(0)` → `kill(2)` pid 0 signals the whole process **group**;
@@ -121,7 +121,7 @@ Honesty demands recording these — the live layer earned its keep:
    *before* the plugin loads never get the `onRoute` hook → `websocket: true`
    silently ignored (handshake → 500). Fixed (routes in a plugin scope).
 7. Cross-process gap: CLI processes are short-lived while nodes are daemons,
-   but `stop()` refused nodes it didn't start — and the failed stop nulled
+   but `stop()` refused nodes it didn't start: and the failed stop nulled
    the pid, letting `remove()` delete a **running** node's data dir. Fixed
    (adopted stop via persisted pid/pidfile; stop failure keeps the record
    intact) + live test.
@@ -143,7 +143,7 @@ Run 2026-10-10 on the same host. Gates before commit: `npm run typecheck`,
 `npm run lint`, `npm test` (unit), `npm run build`, and
 `KAIZEN_TEST_LIVE=1 npm run test:integration`.
 
-### 5.1 Unit suite — `npm test`: 81 tests / 10 files (Phase 1: 32)
+### 5.1 Unit suite: `npm test`: 81 tests / 10 files (Phase 1: 32)
 
 New coverage: topology presets + custom validation (duplicate names/keys,
 keyless validators, >6 validators, missing validators, invalid input
@@ -160,7 +160,7 @@ partial-create rollback leaves no debris, purge semantics, recovery after
 a failed create); store migrations v4/v5 (sticky `started_at`,
 `expected_peers`, idempotent `close`).
 
-### 5.2 Live suite — `KAIZEN_TEST_LIVE=1 npm run test:integration`
+### 5.2 Live suite: `KAIZEN_TEST_LIVE=1 npm run test:integration`
 
 Real `portaldot_dev` processes; isolated temp dirs; engine-allocated ports;
 shared verified binary cache; sequential files. Final run: **25/25 tests /
@@ -203,7 +203,7 @@ running; `node stop`/`node start` on one validator; `purge` correctly
 - Validator staking flows unexercised on-chain (Phase 5).
 - Stall ("alive but wedged") detection is implemented in the health machine
   (chain-stalled reason, unit-tested) but was not induced against a real
-  wedged node — that belongs to Phase 3 failure work.
+  wedged node: that belongs to Phase 3 failure work.
 - The `unavailable` state is unit-tested; the live suite exercises the
   stronger process-dead → `unhealthy` path (by design, process evidence
   takes precedence).
@@ -242,7 +242,7 @@ curl -s -H 'Content-Type: application/json' \
 
 - Phase 1: process-manager failure matrix (SIGTERM, SIGKILL, crash-on-start,
   port-in-use, disk-full base-path), RPC reconnect on node restart.
-- Phase 2B: UI e2e — dashboard renders live WS data from a real network;
+- Phase 2B: UI e2e: dashboard renders live WS data from a real network;
   no-mock-data assertion.
 - Phase 3: each fault mechanism positive+negative test; scenario replay
   determinism check (same action sequence, recorded, not outcome-claimed);
@@ -255,7 +255,7 @@ curl -s -H 'Content-Type: application/json' \
 
 ## 9. Tests Executed in Phase 2B (web UI, client layer, logs endpoint)
 
-### 9.1 Component/unit layer (mocked — fixtures only, never production)
+### 9.1 Component/unit layer (mocked: fixtures only, never production)
 
 `npm test` → **113 tests / 17 files pass** (81 pre-existing engine/CLI
 unchanged + 32 new web tests, `apps/web/src/**/*.test.{ts,tsx}`):
@@ -285,13 +285,13 @@ unchanged + 32 new web tests, `apps/web/src/**/*.test.{ts,tsx}`):
 jsdom environment; `src/test-utils/` holds the scripted `FakeWebSocket`,
 record builders, and render wrapper (test-only).
 
-### 9.2 Live suite — `KAIZEN_TEST_LIVE=1 npm run test:integration`
+### 9.2 Live suite: `KAIZEN_TEST_LIVE=1 npm run test:integration`
 
 **30 tests / 8 files** (Phase 2A's 25 + webclient 5). Full-suite runtime
 224.79s on this host. One failure during the phase was api.int asserting the
 pre-DEC-017 node-route contract (`sample: null`); the contract intentionally
 improved (on-demand sample of honest unreachable data) and the test was
-updated — re-run green.
+updated: re-run green.
 
 New file `test/integration/webclient.int.test.ts` runs the ACTUAL
 `KaizenApiClient` + `KaizenEventStream` (the browser's code) against a real
@@ -323,8 +323,8 @@ pgrep -ax portaldot_dev   # must print nothing after the suites
 
 - **Real backend/infrastructure**: §9.2 only (REST/WS/engine/nodes/RPC +
   the UI's transport code end-to-end).
-- **Mocks/fixtures**: everything in §9.1 — rendering and state logic.
-- **NOT done**: real-browser E2E (no Playwright in the repo) — RSK-23. Do
+- **Mocks/fixtures**: everything in §9.1: rendering and state logic.
+- **NOT done**: real-browser E2E (no Playwright in the repo): RSK-23. Do
   not describe Phase 2B as "browser-verified".
 
 ---
@@ -334,7 +334,7 @@ pgrep -ax portaldot_dev   # must print nothing after the suites
 ### 10.1 What ran
 
 Standalone harness `test/experiments/t31-spike.mjs` (Node ESM; imports the
-built engine only — run `npm run build` first). Every experiment creates a
+built engine only: run `npm run build` first). Every experiment creates a
 **fresh disposable** Kaizen-managed network, verifies `designatedTest`
 before faulting (DEC-008), and tears everything down (leak checks after
 each run: no `portaldot_dev`/`socat`, empty netns, empty INPUT/OUTPUT
@@ -366,8 +366,8 @@ after.
 ### 10.2 Gates executed for T-3.1 (all green)
 
 - `npm run typecheck` ✅ · `npm run lint` ✅ · `npm run build` ✅
-- `npm test` ✅ — 113 tests / 17 files
-- `KAIZEN_TEST_LIVE=1 npm run test:integration` ✅ — 30 tests / 8 files
+- `npm test` ✅: 113 tests / 17 files
+- `KAIZEN_TEST_LIVE=1 npm run test:integration` ✅: 30 tests / 8 files
   (226 s, real `portaldot_dev 2.0.0-unknown-x86_64-linux-gnu`)
 
 ### 10.3 Verification boundary
@@ -382,13 +382,13 @@ after.
 
 ---
 
-## 11. Tests Executed in Phase 3B — FailureInjector (T-3.2)
+## 11. Tests Executed in Phase 3B: FailureInjector (T-3.2)
 
 ### 11.1 Unit layer (no portaldot; real stand-in processes)
 
-`packages/engine/test/fault.test.ts` — **23 tests**. The stand-in "node" is
+`packages/engine/test/fault.test.ts`: **23 tests**. The stand-in "node" is
 a tiny local HTTP RPC server run by `node -e`, so SIGSTOP/SIGCONT, TCP
-reachability, pid files, and restart semantics are REAL — only the
+reachability, pid files, and restart semantics are REAL: only the
 blockchain is absent (that part is §11.2). Covered: lifecycle-machine
 truth table; safety-gate rejection (unknown network/node, non-designated,
 non-local chain, stopped node, ambiguous pid file, identity drift between
@@ -403,8 +403,8 @@ idempotent status queries.
 
 ### 11.2 Live integration (real `portaldot_dev`, disposable networks)
 
-`test/integration/faults.int.test.ts` — **5 tests** against a Kaizen-created
-two-node network (`designatedTest === true` asserted at creation — the
+`test/integration/faults.int.test.ts`: **5 tests** against a Kaizen-created
+two-node network (`designatedTest === true` asserted at creation: the
 DEC-008 basis). Every live fault claim pairs the injector's result with an
 INDEPENDENT observation from the test itself:
 
@@ -422,26 +422,26 @@ INDEPENDENT observation from the test itself:
 npm run typecheck        # pass (engine, cli, api, web)
 npm run lint             # pass
 npm run build            # pass
-npm test                 # 136/136 passed (18 files, 68 s) — 113 prior + 23 new
+npm test                 # 136/136 passed (18 files, 68 s): 113 prior + 23 new
 TMPDIR=/tmp/opencode KAIZEN_TEST_BIN_DIR=/tmp/opencode/bin \
   KAIZEN_TEST_LIVE=1 npm run test:integration
-                         # 35/35 passed (9 files, 268 s) — 30 prior + 5 new
+                         # 35/35 passed (9 files, 268 s): 30 prior + 5 new
 ```
 
 - **CLI smoke**: no new CLI surface in T-3.2 (CLI/UI for faults is T-3.6);
   the CLI is unchanged and covered by the existing suites.
 - **Harness**: the Phase 3A spike harness (`test/experiments/t31-spike.mjs`)
-  was NOT duplicated — it remains the mechanism-research tool; the injector
+  was NOT duplicated: it remains the mechanism-research tool; the injector
   is the production path and shares no experiment code.
 - Prerequisites: `npm run build` first (API typecheck consumes engine dist);
   the live suites need a binary cache (`KAIZEN_TEST_BIN_DIR`) and skip
   honestly without `KAIZEN_TEST_LIVE=1`.
 
-## 12. Tests Executed in Phase 3C — Scenario Model & Authoring (T-3.3)
+## 12. Tests Executed in Phase 3C: Scenario Model & Authoring (T-3.3)
 
 ### 12.1 Unit layer (pure model + registry; no processes, no clock)
 
-`packages/engine/test/scenario.test.ts` — **32 tests**. Registry built from
+`packages/engine/test/scenario.test.ts`: **32 tests**. Registry built from
 a REAL `FailureInjector.describeMechanisms()` (never a fixture list).
 Covered: registry mirrors adapters (pause/terminate supported;
 peer-disconnect/partition blocked with unblock paths verbatim;
@@ -469,7 +469,7 @@ capability rules via an injected registry (supported op missing capability
 
 ### 12.2 Persistence layer (real SQLite, incl. file-backed restart)
 
-`packages/engine/test/scenario-store.test.ts` — **11 tests**. CRUD
+`packages/engine/test/scenario-store.test.ts`: **11 tests**. CRUD
 round-trip with stable ids/timestamps; full restart reload (close + reopen
 the same db file) byte-identical; duplicate names on create/update →
 `SCENARIO_ALREADY_EXISTS`; duplicate ids at the store layer; NOT_FOUND on
@@ -483,7 +483,7 @@ fault records; delete semantics.
 
 ### 12.3 API layer (real Fastify app + real SQLite via app.inject)
 
-`apps/api/test/scenarios.test.ts` — **18 tests** (new `apps/api/test/`
+`apps/api/test/scenarios.test.ts`: **18 tests** (new `apps/api/test/`
 suite, added to `vitest.config.mts`). CRUD (201/200/200/404), structured
 `SCENARIO_INVALID` 400 with per-issue code/severity/path/remediation,
 unknown-operation 400, secret-content 400 (secret never echoed back),
@@ -506,10 +506,10 @@ validate path/method, PUT/DELETE, SCENARIO_INVALID translation).
 npm run typecheck        # pass (engine, cli, api, web)
 npm run lint             # pass
 npm run build            # pass
-npm test                 # 202/202 passed (21 files) — 136 prior + 66 new
+npm test                 # 202/202 passed (21 files): 136 prior + 66 new
 TMPDIR=/tmp/opencode KAIZEN_TEST_BIN_DIR=/tmp/opencode/bin \
   KAIZEN_TEST_LIVE=1 npm run test:integration
-                         # 35/35 passed (9 files, 346 s) — full regression,
+                         # 35/35 passed (9 files, 346 s): full regression,
                          # T-3.2 injector/live fault suites intact
 ```
 
@@ -521,22 +521,22 @@ TMPDIR=/tmp/opencode KAIZEN_TEST_BIN_DIR=/tmp/opencode/bin \
 - Prerequisite reminders: `npm run build` before typecheck (API consumes
   engine dist); `zod` is now an engine dependency (workspace-hoisted, same
   version as the API); the API test suite runs in the unit config (real
-  Fastify app + temp SQLite — never spawns portaldot).
+  Fastify app + temp SQLite: never spawns portaldot).
 
-## 13. Tests Executed in Phase 3D — Scenario Execution Engine (T-3.4)
+## 13. Tests Executed in Phase 3D: Scenario Execution Engine (T-3.4)
 
-### 13.1 Engine unit suite — `packages/engine/test/scenario-run.test.ts`
+### 13.1 Engine unit suite: `packages/engine/test/scenario-run.test.ts`
 
 **37 tests** (new), run against a real SQLite store, real EventBus, real
 FailureInjector, and **real stand-in node processes** (fake JSON-RPC HTTP
-servers, the same R-22 A pattern as `fault.test.ts`) — no live portaldot,
+servers, the same R-22 A pattern as `fault.test.ts`): no live portaldot,
 no mocked injector. Covered:
 
 - **State machines**: every legal run transition (13 states) and step
   transition (11 states) accepted; phase-skipping and terminal
   resurrection rejected; terminal-state classification.
 - **Execution core**: steps run in declared order through the injector
-  (exactly one execute-mode fault record per fault step — no bypass);
+  (exactly one execute-mode fault record per fault step: no bypass);
   full per-step evidence (pre/post verdicts with details, claims,
   outcome, verification, cleanup); immutable snapshot survives later
   authoring edits; run history survives store reopen; event ordering
@@ -574,7 +574,7 @@ no mocked injector. Covered:
 - **Shutdown**: `close()` cancels in-flight runs through the cleanup path
   and then refuses new runs.
 
-### 13.2 API unit suite — `apps/api/test/scenario-runs.test.ts`
+### 13.2 API unit suite: `apps/api/test/scenario-runs.test.ts`
 
 **9 tests** (new suite, real Fastify app + real SQLite via
 `app.inject`, never spawns portaldot). Execute validation (missing mode
@@ -593,10 +593,10 @@ leaks). The T-3.3 suite's "no execution routes" test was updated to its
 T-3.4 truth: no implicit-execution/replay routes; execute demands the
 explicit marker + target; refusal persists a rejected run.
 
-### 13.3 LIVE integration — `test/integration/scenario-runs.int.test.ts`
+### 13.3 LIVE integration: `test/integration/scenario-runs.int.test.ts`
 
 **8/8 passed** against REAL `portaldot_dev` two-node network
-(disposable, designatedTest — DEC-008; independent test-side RPC/process
+(disposable, designatedTest: DEC-008; independent test-side RPC/process
 observation for every claim):
 
 1. **Pause run with independent verification**: victim unreachable while
@@ -610,7 +610,7 @@ observation for every claim):
    records, node untouched (same pid, chain producing blocks).
 4. **skip-step live**: unmet step skipped with its recorded reason while
    the next step executes FOR REAL (fault record exists, recovery
-   verified) — run `completed-with-warnings`.
+   verified): run `completed-with-warnings`.
 5. **Cancellation during the hold**: fault observed active, victim
    unreachable independently, cancel requested → `cancelled` with
    `recoveryVerified: true`, cleanup verified, same pid, RPC back, chain
@@ -631,12 +631,12 @@ observation for every claim):
 npm run typecheck        # pass (engine, cli, api, web)
 npm run lint             # pass (incl. new test files)
 npm run build            # pass
-npm test                 # 248/248 passed (23 files) — 202 prior + 46 new:
+npm test                 # 248/248 passed (23 files): 202 prior + 46 new:
                          #   scenario-run.test.ts 37, scenario-runs.test.ts 9
                          #   per-layer: engine 185, api 27, web 36
 TMPDIR=/tmp/opencode KAIZEN_TEST_BIN_DIR=/tmp/opencode/bin \
   KAIZEN_TEST_LIVE=1 npm run test:integration
-                         # 43/43 passed (10 files, 317 s) — 35 prior + 8 new
+                         # 43/43 passed (10 files, 317 s): 35 prior + 8 new
                          # scenario-run live checks; T-3.2 fault suites intact
 ```
 
@@ -647,12 +647,12 @@ TMPDIR=/tmp/opencode KAIZEN_TEST_BIN_DIR=/tmp/opencode/bin \
   (the suites tear down their networks and assert cleanup themselves).
 - **Not faked anywhere**: inconclusive conditions stay `inconclusive`,
   unproven cleanup stays `cleanup-failed` + quarantined, interrupted runs
-  stay INTERRUPTED — no test asserts a recovery the engine did not
+  stay INTERRUPTED: no test asserts a recovery the engine did not
   observe.
 
-## 14. Tests Executed in Phase 3E — Scenario Replay (T-3.5)
+## 14. Tests Executed in Phase 3E: Scenario Replay (T-3.5)
 
-### 14.1 Engine unit suite — `packages/engine/test/scenario-replay.test.ts`
+### 14.1 Engine unit suite: `packages/engine/test/scenario-replay.test.ts`
 
 **10 tests** (new), on the shared harness (`test/scenario-harness.ts`,
 extracted from `scenario-run.test.ts`): REAL stand-in node processes +
@@ -666,7 +666,7 @@ scripted FaultAdapter doubles. Covered:
   honesty is the `replayNote` helper, not a `warnings` entry.
 - **Snapshot independence**: after the scenario is edited AND deleted,
   replay still executes the recorded snapshot (execute() of the
-  deleted scenario throws SCENARIO_NOT_FOUND — contrast).
+  deleted scenario throws SCENARIO_NOT_FOUND: contrast).
 - **Eligibility**: `rejected` (message: never executed), unfinished
   (`running`), unknown run ids, and malformed snapshots (empty or
   missing steps) all refused without creating any run record.
@@ -690,7 +690,7 @@ scripted FaultAdapter doubles. Covered:
   CONFLICT; after terminal, a new replay is allowed; every attempt
   (including the refused one) is queryable via `list({ replayOf })`.
 
-### 14.2 API suite — `apps/api/test/scenario-runs.test.ts` (now 13)
+### 14.2 API suite: `apps/api/test/scenario-runs.test.ts` (now 13)
 
 Four new tests on the real Fastify app + real SQLite (no injector):
 202 replay with `replayNote` + source immutable over the wire +
@@ -702,7 +702,7 @@ target → 404 persisted rejection with provenance, non-designated →
 duplicate replays → exactly one 202 and one 409, and a new replay is
 allowed once terminal.
 
-### 14.3 LIVE integration — `test/integration/scenario-runs.int.test.ts` (now 9/9)
+### 14.3 LIVE integration: `test/integration/scenario-runs.int.test.ts` (now 9/9)
 
 One new live check on a disposable designated-test `portaldot_dev`
 network: a real pause run is executed, then replayed with an explicit
@@ -723,9 +723,9 @@ suite: **44/44 across 10 files** (T-3.2/T-3.3/T-3.4 suites intact).
   the live replay's effect and recovery are observed by the test
   itself, not read from the run record.
 
-## 15. Tests Executed in Phase 8 (T-8.1) — V3 Connectivity Probe
+## 15. Tests Executed in Phase 8 (T-8.1): V3 Connectivity Probe
 
-### 15.1 Engine unit suite — `packages/engine/test/v3-probe.test.ts` (21 tests, mocked transports — offline)
+### 15.1 Engine unit suite: `packages/engine/test/v3-probe.test.ts` (21 tests, mocked transports: offline)
 
 All three transports are injected fakes; the suite performs **no network
 I/O**. Coverage (one `it` per requirement where applicable):
@@ -738,12 +738,12 @@ I/O**. Coverage (one `it` per requirement where applicable):
   shapes; default endpoints shown origin-redacted in results.
 - independence: substrate down + EVM/explorer up; EVM down +
   substrate/explorer up; all three failing differently (unavailable /
-  protocol-error / timeout) — three results always returned, `healthy`
+  protocol-error / timeout): three results always returned, `healthy`
   false, no short-circuit, nothing suppressed.
 - timeout + cleanup: a hung substrate transport yields `timeout` within
   the 500 ms deadline (elapsed bounded, latency ≥ 450 ms) and the
   transport's `AbortSignal` is observed fired (`signal.aborted`,
-  abort-counter 1) — deterministic cleanup path; transport-thrown
+  abort-counter 1): deterministic cleanup path; transport-thrown
   `RPC_TIMEOUT`/`RPC_ERROR` are classified instantly (not by waiting for
   the deadline).
 - malformed responses: HTTP 200 with non-JSON body →
@@ -769,10 +769,10 @@ I/O**. Coverage (one `it` per requirement where applicable):
   local port with a pre-aborted signal → rejects `RPC_TIMEOUT`.
 - single-endpoint use: `probeEndpoint('evm-rpc')` honors the same contract.
 
-### 15.2 LIVE integration — `test/integration/v3-probe.int.test.ts` (gated `KAIZEN_TEST_V3=1`)
+### 15.2 LIVE integration: `test/integration/v3-probe.int.test.ts` (gated `KAIZEN_TEST_V3=1`)
 
 Independent gate (not `KAIZEN_TEST_LIVE`): **without the gate the suite is
-skipped — verified: running it ungated reports `1 skipped`, never passed**.
+skipped: verified: running it ungated reports `1 skipped`, never passed**.
 With the gate, the probe runs against the configured official V3 endpoints
 and the test asserts `ok` on every endpoint with real observations, the
 chain id exactly 420420777, block number > 0, a hash-shaped best-header
@@ -786,7 +786,7 @@ chain id 420420777 / block #106135 / client
 explorer HTTP 200 `text/html` title "Portaldot Node Console" / 888 ms;
 `healthy: true` (R-23/R-24).
 
-- **CLI/UI surfaces**: none in T-8.1 by design (DEC-023) — nothing to
+- **CLI/UI surfaces**: none in T-8.1 by design (DEC-023): nothing to
   smoke; shared typecheck/build gates cover the engine package.
 - **Hygiene after the live run**: the probe opens and closes its own WS/HTTP
   connections; `pgrep -af portaldot` after → none.
@@ -798,18 +798,18 @@ explorer HTTP 200 `text/html` title "Portaldot Node Console" / 888 ms;
 | `npm run build` | PASS (exit 0; engine/cli/api/web) |
 | `npm run typecheck` | PASS (exit 0) |
 | `npm run lint` | PASS (exit 0) |
-| `npm test` | First full run: 282/283 — one failure in `scenario-run.test.ts` ("stand-in node could not listen on 34741", a transient local port-bind contention in the harness, not V3 code); isolated re-run of that file: 37/37 PASS; second full run: **283/283 (25 files) PASS** |
-| `npx vitest run --config vitest.integration.config.mts test/integration/v3-probe.int.test.ts` (no gate) | 1 skipped — the live check does not pass without its gate |
+| `npm test` | First full run: 282/283: one failure in `scenario-run.test.ts` ("stand-in node could not listen on 34741", a transient local port-bind contention in the harness, not V3 code); isolated re-run of that file: 37/37 PASS; second full run: **283/283 (25 files) PASS** |
+| `npx vitest run --config vitest.integration.config.mts test/integration/v3-probe.int.test.ts` (no gate) | 1 skipped: the live check does not pass without its gate |
 | `KAIZEN_TEST_V3=1 npx vitest run --config vitest.integration.config.mts test/integration/v3-probe.int.test.ts` | **1/1 PASS** (exit 0, 3.1 s probe; observations in §15.2 / R-23 / R-24) |
 
-## 16. Tests Executed in Phase 3F — Failure Lab CLI/API Integration (T-3.6A)
+## 16. Tests Executed in Phase 3F: Failure Lab CLI/API Integration (T-3.6A)
 
-### 16.1 CLI unit suite — `packages/cli/test/scenario-commands.test.ts` (36 tests, mocked engine — offline)
+### 16.1 CLI unit suite: `packages/cli/test/scenario-commands.test.ts` (36 tests, mocked engine: offline)
 
 - **Harness**: `buildProgram({ engineFactory })` DI with a scripted fake
   engine; commander `exitOverride()` per command; output captured at all
   three levels (configureOutput, console spies, `process.stdout/stderr`
-  write spies — subcommands do not inherit configureOutput after
+  write spies: subcommands do not inherit configureOutput after
   buildProgram); `process.exitCode` save/restored per invocation.
 - **Coverage**: help surface of every command; `--json` envelopes and
   human mode; `--timeout`/`--limit`/`--offset` parsing (non-numeric,
@@ -823,7 +823,7 @@ explorer HTTP 200 `text/html` title "Portaldot Node Console" / 888 ms;
   executing", exit 1), cancel-timeout honesty (never success), and a
   cancel-success path (exit 0 on observed `cancelled`).
 
-### 16.2 Engine unit additions — `scenario-run.test.ts` (now 41), `store.test.ts` (now 8)
+### 16.2 Engine unit additions: `scenario-run.test.ts` (now 41), `store.test.ts` (now 8)
 
 - **Cross-process cancel**: a second `ScenarioEngine` over the SAME
   store (the topology of a separate `kaizen run cancel` process)
@@ -839,13 +839,13 @@ explorer HTTP 200 `text/html` title "Portaldot Node Console" / 888 ms;
   `deferred` entry) and still terminalizes dead-owner/pid-less orphans
   (`INTERRUPTED`).
 - **Migration**: `store.test.ts` schemaVersion 17 → 18 (v18 =
-  `scenario_runs.executor_pid`) — the only pre-existing assertion
+  `scenario_runs.executor_pid`): the only pre-existing assertion
   updated; nothing weakened.
 - Store-level SQL visibility (WAL, two connections, one file) verified
   separately while diagnosing; the durable-cancel path is covered by the
   tests above.
 
-### 16.3 LIVE integration — `test/integration/cli-scenario.int.test.ts` (gated `KAIZEN_TEST_LIVE=1`; real `portaldot_dev`, disposable designatedTest network)
+### 16.3 LIVE integration: `test/integration/cli-scenario.int.test.ts` (gated `KAIZEN_TEST_LIVE=1`; real `portaldot_dev`, disposable designatedTest network)
 
 Five tests, each with INDEPENDENT observations beyond the CLI's own
 printed record:
@@ -858,10 +858,10 @@ printed record:
    (built bin, same `KAIZEN_DATA_DIR`); `run cancel` from the test
    process durably records the request; the child's engine interrupts
    the hold; the child honestly reports `{ok:false, state:"cancelled"}`
-   exit 1; the run reached `cancelled` (not failed — pending
+   exit 1; the run reached `cancelled` (not failed: pending
    cancellation honored); node back with the SAME pid + RPC reachable;
    cancelling the finished run → SCENARIO_RUN_CONFLICT.
-   (The bg child also isolates the harness's global spies — in-process
+   (The bg child also isolates the harness's global spies: in-process
    CLI invocations are strictly sequential by design.)
 5. **Gate refusals**: ghost network → refused + persisted rejected run
    inspectable by id; replay-of-rejected refused (no new run); missing
@@ -874,16 +874,16 @@ printed record:
 | `npm run typecheck` | PASS (exit 0) |
 | `npm run lint` | PASS (exit 0) |
 | `npm run build` | PASS (exit 0; rolldown notice only) |
-| `npm test` | **323/323 PASS (26 files)** — CLI 36/36; `scenario-run.test.ts` 41/41 |
-| `npm run test:integration` (no gate) | 50 skipped (cli-scenario 5 skipped — never passed without its gate) |
+| `npm test` | **323/323 PASS (26 files)**: CLI 36/36; `scenario-run.test.ts` 41/41 |
+| `npm run test:integration` (no gate) | 50 skipped (cli-scenario 5 skipped: never passed without its gate) |
 | `KAIZEN_TEST_LIVE=1 … cli-scenario.int.test.ts` | **5/5 PASS** (~32 s) |
 | `KAIZEN_TEST_LIVE=1 … scenario-runs.int.test.ts` (regression re-run; engine touched) | **9/9 PASS** |
 | `KAIZEN_TEST_LIVE=1 … faults.int.test.ts` (regression re-run; pause adapter touched) | **5/5 PASS** |
 | Hygiene: `pgrep -af portaldot` after live runs | none |
 
-## 17. Week 2 submission — T-8.2 V3 anchoring + T-3.6B console (2026-10-21)
+## 17. Week 2 submission: T-8.2 V3 anchoring + T-3.6B console (2026-10-21)
 
-### 17.1 T-8.2 — V3 on-chain run anchoring
+### 17.1 T-8.2: V3 on-chain run anchoring
 
 - **Engine unit** `packages/engine/test/v3-anchor.test.ts` (fake chain
   transport): canonical run hash determinism; ABI selectors vs solc output;
@@ -925,10 +925,10 @@ linux-x64 artifact (`node -r ./arch-x64.cjs …`, the file containing
 `Object.defineProperty(process, 'arch', { value: 'x64' })`). Emulation is
 slower than native but runs the real, hash-verified binary. The
 workaround is per-machine, not part of the repo, and was not present in
-the later docs/UI session — no new live node runs were made there. On an
+the later docs/UI session: no new live node runs were made there. On an
 x86_64 Linux host none of this is needed.
 
-### 17.3 T-3.6B — imported console (jsdom)
+### 17.3 T-3.6B: imported console (jsdom)
 
 Seven web test files, 55 tests (`apps/web/src/**`):
 `Console.test.tsx` (shell routing/steps, landing health, nav gating,
@@ -963,4 +963,4 @@ default suite:
 | `npx vitest run packages/engine/test/scenario-run.test.ts` | 41/41 PASS |
 | `npx vitest run packages/engine/test/scenario-replay.test.ts` | 10/10 PASS |
 | **Total** | **379/379 PASS (29 files)** |
-| Live UI smoke in a real browser | NOT RUN (no browser / no x86_64 userland in this session — RSK-23, RSK-31) |
+| Live UI smoke in a real browser | NOT RUN (no browser / no x86_64 userland in this session: RSK-23, RSK-31) |

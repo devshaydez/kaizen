@@ -135,6 +135,9 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       fs.writeFileSync(path.join(out, `certificate-${cert.fingerprint.slice(2, 14)}.json`), JSON.stringify(cert, null, 2));
       fs.writeFileSync(path.join(out, 'verification-online.json'), JSON.stringify(online, null, 2));
       fs.writeFileSync(path.join(out, 'score.json'), JSON.stringify(score, null, 2));
+      // Public live demo: the persisted run record lets anyone recompute the
+      // certificate fingerprint offline (sha256 of the canonical document).
+      fs.writeFileSync(path.join(out, 'run.json'), JSON.stringify(engine.scenarioRuns.get(run.id), null, 2));
     }
     expect(online.status, online.reasons.join('; ')).toBe('verified');
     // The same certificate as a portable bundle, verified from the file contents alone

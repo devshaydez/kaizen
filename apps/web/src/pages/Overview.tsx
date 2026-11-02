@@ -13,6 +13,7 @@ import { ACTIVE_FAULT_STATES, bestHeight, finalizedHeight, healthyCount, liveLin
 import { formatUptime } from '../components/fmt';
 import { eventLevel, eventText, eventTime, isNotable } from '../lib/eventText';
 import { useConsole } from '../state/ConsoleContext';
+import { REPLAY } from '../lib/mode';
 import { useEventsContext } from '../state/EventsContext';
 
 export function Overview() {
@@ -69,6 +70,7 @@ export function Overview() {
         <h1 aria-label={headline}>
           Network <span className={ok || !running ? 'g' : 'gc'}>{word}</span>
         </h1>
+        <p className="sub">Live network health, validator status, topology, and recent incidents.</p>
         <div className="actions">
           {running ? (
             <Btn tone="pri" arrow onClick={() => nav('/lab')}>
@@ -90,7 +92,7 @@ export function Overview() {
       </div>
       <aside className="events ov-events" aria-label="Recent events">
         <div className="lab">Recent events</div>
-        {recent.length === 0 && <div className="sub" style={{ paddingTop: 4 }}>No events for this network since the console opened.</div>}
+        {recent.length === 0 && <div className="sub" style={{ paddingTop: 4 }}>{REPLAY ? 'Replay: no live event stream. The recorded fault evidence for this drill is under Incidents.' : 'No events for this network since the console opened.'}</div>}
         <AnimatePresence initial={false}>
           {recent.map((e) => (
             <motion.div key={e.seq} layout className={`evt ${eventLevel(e) === 'bad' ? 'hot' : ''}`} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.3, ease }}>
@@ -101,6 +103,7 @@ export function Overview() {
         </AnimatePresence>
       </aside>
       <div className="ov-stage">
+        {REPLAY && <div className="sub">Replay topology · recorded drill data, not a live network</div>}
         <Topology net={vnet} onSelect={openNode} />
         <div className="topo-note">
           Select a node to inspect it · solid links observed by monitoring ({observed} via peer ids) · dashed red: not observed

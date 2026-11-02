@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { LayoutGroup, motion, useSpring, useTransform } from 'framer-motion';
+import { LayoutGroup, motion, useReducedMotion, useSpring, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import type { ApiError } from '../api/client';
 
@@ -55,13 +55,14 @@ export function Btn({
   title?: string;
   type?: 'button' | 'submit';
 }) {
+  const reduce = useReducedMotion();
   return (
     <motion.button
       type={type}
       className={`btn ${tone} ${small ? 'sm' : ''}`}
-      whileHover={disabled ? undefined : { y: -1 }}
-      whileTap={disabled ? undefined : { scale: 0.98 }}
-      transition={{ duration: 0.18, ease }}
+      whileHover={disabled || reduce ? undefined : { y: -1 }}
+      whileTap={disabled || reduce ? undefined : { scale: 0.98 }}
+      transition={{ duration: reduce ? 0 : 0.18, ease }}
       onClick={onClick}
       disabled={disabled}
       title={title}

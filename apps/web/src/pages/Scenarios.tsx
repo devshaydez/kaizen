@@ -218,6 +218,7 @@ export function Scenarios() {
         <div>
           <div className="lab">Scenarios · {network ? `target ${network.name}` : 'no network selected'}</div>
           <h1>Replay failures on demand</h1>
+          <p className="sub">Build or replay a failure sequence and inspect its recovery evidence.</p>
         </div>
       </div>
       <ErrorBox error={list.error} title="Scenarios unavailable" />

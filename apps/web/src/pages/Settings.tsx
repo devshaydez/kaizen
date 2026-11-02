@@ -12,6 +12,7 @@ import { ApiError, apiClient } from '../api/client';
 import { Btn, ErrorBox, Planned, ease } from '../components/ui';
 import { shortId } from '../components/fmt';
 import { useConsole } from '../state/ConsoleContext';
+import { REPLAY, REPLAY_REFUSAL } from '../lib/mode';
 import { useEventsContext } from '../state/EventsContext';
 import { useAsync } from '../state/useAsync';
 
@@ -83,11 +84,17 @@ export function Settings() {
         <div>
           <div className="lab">Settings</div>
           <h1>Environment</h1>
+          <p className="sub">Check API, node binary, event stream, and local configuration.</p>
         </div>
         <div className="actions">
           <Btn onClick={rerun}>Run checks</Btn>
         </div>
       </div>
+      {REPLAY && (
+        <div className="okbox" role="note">
+          Hosted replay: no Kaizen engine, binary or event stream runs behind this console. Screens show real recorded drills. {REPLAY_REFUSAL}
+        </div>
+      )}
       <div className="split">
         <div>
           <div className="lab" style={{ marginBottom: 6 }}>

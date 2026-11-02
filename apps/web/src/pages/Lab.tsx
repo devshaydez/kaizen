@@ -231,7 +231,7 @@ export function Lab() {
               </Btn>
               <Btn onClick={() => nav('/incidents')}>Open incident</Btn>
             </div>
-            <div className="sub">Recover rolls the fault back now; otherwise the injector removes it after the hold and verifies recovery.</div>
+            <div className="sub">Recover now, or let the hold expire to remove the fault and verify recovery.</div>
             <Topology net={vnet} />
           </div>
           <aside className="glass livelog" aria-label="Live fault log">
@@ -270,6 +270,7 @@ export function Lab() {
       <div className="lab-wrap">
         <div>
           <div className={`eyebrow ${done ? (result.ok ? 'ok' : 'bad') : ''}`}>{done ? (result.ok ? 'Recovered' : `Outcome: ${result.outcome}`) : `Failure Lab · ${network.name}`}</div>
+          <p className="sub">Run controlled failures on the selected test network; compare live impact with verified recovery.</p>
           {done ? (
             <h1 aria-label={result.ok ? 'Recovery verified' : 'Fault did not verify'}>
               {result.ok ? (

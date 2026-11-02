@@ -14,6 +14,7 @@ import { Btn, NoNet, Num, Planned, Seg, Stat, ease } from '../components/ui';
 import { formatUptime } from '../components/fmt';
 import { healthyCount, liveLinks } from '../lib/model';
 import { useConsole } from '../state/ConsoleContext';
+import { REPLAY } from '../lib/mode';
 
 type Target = 'Local' | 'Docker' | 'Kubernetes';
 
@@ -36,10 +37,18 @@ export function Deployments() {
             <br />
             nodes up
           </h1>
-          <p>
-            {running ? 'Running as local processes' : 'Local processes (stopped)'} on this host. Chain <span className="mono-s">{network.chain}</span>, data in{' '}
-            <span className="mono-s">{network.baseDir}</span>.
-          </p>
+          <p className="sub">View local node processes. Docker and Kubernetes targets are not implemented yet.</p>
+          {REPLAY ? (
+            <p>
+              Recorded as local processes on a fresh GitHub Actions runner (state at the end of the drill; the runner and its processes are gone). Chain{' '}
+              <span className="mono-s">{network.chain}</span>; data directory not recorded in replay.
+            </p>
+          ) : (
+            <p>
+              {running ? 'Running as local processes' : 'Local processes (stopped)'} on this host. Chain <span className="mono-s">{network.chain}</span>, data in{' '}
+              <span className="mono-s">{network.baseDir}</span>.
+            </p>
+          )}
           <div className="actions">
             <Btn tone="pri" arrow onClick={() => nav('/overview')}>
               View network

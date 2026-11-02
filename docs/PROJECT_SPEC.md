@@ -1,11 +1,15 @@
-# Kaizen — Project Specification
+# Kaizen: Project Specification
 
 Status: LOCKED (Phase 0, 2026-10-09). Changes require an explicit decision entry in `docs/DECISIONS.md`.
+
+### Product positioning statement
+
+Monitoring tells you a node is down. Kaizen proves it comes back, and makes that proof worth stake.
 
 ## 1. Problem Statement
 
 Operating a Substrate-based blockchain network (Portaldot) requires juggling node
-processes, chain specs, peer wiring, keys, and failure recovery — usually through
+processes, chain specs, peer wiring, keys, and failure recovery: usually through
 raw CLI flags and log-scraping. There is no tool in the Portaldot ecosystem that
 lets a developer **create, monitor, deliberately break, diagnose, recover, and
 deploy** a Portaldot network as one coherent, observable workflow.
@@ -21,22 +25,22 @@ operations** through a shared backend engine.
 - Make every operation observable: status, logs, timelines, results, errors.
 - Make validator operations accessible where the official runtime exposes them.
 - Make deployment to Docker and Kubernetes/Helm a genuine, verified capability.
-- Keep the web UI and CLI on one shared operations engine — no divergent logic.
+- Keep the web UI and CLI on one shared operations engine: no divergent logic.
 
 ## 3. Non-Goals
 
 - Not a block explorer, wallet, or trading interface.
 - Not a hosted/managed service; it runs on the operator's machine/cluster.
 - Not a claim of compatibility with every cloud provider.
-- Not automated root-cause analysis — Kaizen detects and presents **symptoms and
+- Not automated root-cause analysis: Kaizen detects and presents **symptoms and
   evidence**; it does not invent root causes it cannot prove.
 - Not a substitute for production-grade validator key custody (no HSM support).
 
 ## 4. Target Users
 
-1. **Portaldot developers** — need a local multi-node network to test dApps.
-2. **Node operators / SREs** — need monitoring, failure drills, recovery runbooks.
-3. **Hackathon/demo audience** — need a visually impressive, real end-to-end workflow.
+1. **Portaldot developers**: need a local multi-node network to test dApps.
+2. **Node operators / SREs**: need monitoring, failure drills, recovery runbooks.
+3. **Hackathon/demo audience**: need a visually impressive, real end-to-end workflow.
 
 ## 5. Core Lifecycle
 
@@ -78,7 +82,7 @@ Every feature maps to at least one stage of this lifecycle.
 - Execute scenarios against selected test networks.
 - Record actions, timestamps, results, errors.
 - Deterministic **action replay** where the environment allows it. Kaizen
-  distinguishes deterministic action replay from identical blockchain outcomes —
+  distinguishes deterministic action replay from identical blockchain outcomes :
   the latter is never claimed.
 
 ### 6.5 Incident detection and diagnostics (P0)
@@ -91,7 +95,7 @@ Every feature maps to at least one stage of this lifecycle.
 ### 6.6 Deployment (P1/P2)
 - Local process execution: P1 (primary, verified path).
 - Docker-based deployment: P1 (investigate → implement).
-- **Kubernetes + Helm: P2 wow-factor — planned, not abandoned.** Investigated
+- **Kubernetes + Helm: P2 wow-factor: planned, not abandoned.** Investigated
   early (Phase 0) for blockers. If a genuine blocker arises: document evidence,
   propose fallback, never silently drop the feature.
 
@@ -126,7 +130,7 @@ Every feature maps to at least one stage of this lifecycle.
 - AC-4: A failure experiment (e.g. kill one validator) produces a detectable
   incident with timeline and evidence, and a recorded successful recovery.
 - AC-5: A Helm chart deploys a multi-node Portaldot network to a local
-  Kubernetes (minikube) with health feedback — or a documented, evidenced
+  Kubernetes (minikube) with health feedback: or a documented, evidenced
   blocker with an accepted fallback.
 
 ## 9. Explicitly Deferred / Unsupported

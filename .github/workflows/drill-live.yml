@@ -1,0 +1,70 @@
+# Public live demo (kaizen-live): a REAL resilience drill on x86_64, on a
+# schedule and on demand. Boots a two-node portaldot_dev network, pauses a
+# validator, captures chain evidence, certifies the run, verifies it against
+# the chain, anchors the certificate fingerprint on the Portaldot V3 TEST
+# network (when the KAIZEN_V3_SIGNER_SURI secret is set), and publishes the
+# bundle to the `demo-data` branch, which the hosted console reads.
+name: drill-live
+
+on:
+  workflow_dispatch:
+    inputs:
+      requested_by:
+        description: 'Who asked for this drill (shown on the live page)'
+        required: false
+        default: 'manual'
+  schedule:
+    - cron: '17,47 * * * *'
+
+concurrency:
+  group: drill-live
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Live drill + certificate (real portaldot_dev)
+        env:
+          KAIZEN_TEST_LIVE: '1'
+          KAIZEN_ATTESTATION_DIR: ${{ github.workspace }}/attestations
+        run: npx vitest run --config vitest.integration.config.mts test/integration/resilience.int.test.ts
+      - name: Check out demo-data branch
+        run: |
+          git fetch origin demo-data:demo-data 2>/dev/null || true
+          if git show-ref --quiet refs/heads/demo-data; then
+            git worktree add demo-data demo-data
+          else
+            git worktree add --detach demo-data
+            cd demo-data && git checkout --orphan demo-data && git rm -rfq . && cd ..
+          fi
+      - name: Verify, anchor on V3, publish
+        env:
+          KAIZEN_ATTESTATION_DIR: ${{ github.workspace }}/attestations
+          KAIZEN_DEMO_OUT: ${{ github.workspace }}/demo-data
+          KAIZEN_V3_SIGNER_SURI: ${{ secrets.KAIZEN_V3_SIGNER_SURI }}
+        run: node scripts/demo/publish-drill.mjs
+      - name: Push bundle
+        run: |
+          cd demo-data
+          git config user.name 'kaizen-live'
+          git config user.email 'kaizen-live@users.noreply.github.com'
+          git add -A
+          git commit -qm "drill: ${{ github.run_id }} (${{ github.event_name }}${{ inputs.requested_by && format(', {0}', inputs.requested_by) || '' }})"
+          for i in 1 2 3; do git push origin demo-data && break; git pull --rebase origin demo-data; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: drill-attestations
+          path: attestations/
+          if-no-files-found: warn

@@ -11,6 +11,7 @@ import { useConsole } from '../state/ConsoleContext';
 export function Networks() {
   const nav = useNavigate();
   const { networks, networksError, networksLoaded, selectedId, select } = useConsole();
+  const uniqueNetworks = [...new Map(networks.map((network) => [network.id, network])).values()];
   if (networksError) return <ErrorBox error={networksError} title="Cannot reach the Kaizen API" />;
   if (!networksLoaded) return <div className="sub">Loading networks…</div>;
   if (!networks.length)
@@ -28,31 +29,23 @@ export function Networks() {
   return (
     <div className="pagehead">
       <div className="lab">
-        {networks.length} network{networks.length === 1 ? '' : 's'} on this control plane
+        {uniqueNetworks.length} network{uniqueNetworks.length === 1 ? '' : 's'} on this control plane
       </div>
       <h1>
         Your <span className="g">networks</span>
       </h1>
+      <p className="sub">Select a network to inspect it, or create one from a preset.</p>
       <div className="tbl" role="table" aria-label="Networks" style={{ marginTop: 18, maxWidth: 1000 }}>
+
         <div className="tr th" role="row">
-          <span>Name</span>
-          <span>Preset</span>
-          <span>Status</span>
-          <span>Nodes</span>
+          <span>Network</span>
+          <span>Runtime</span>
           <span />
         </div>
-        {networks.map((n) => (
+        {uniqueNetworks.map((n) => (
           <div key={n.id} role="row" className={`tr ${n.id === selectedId ? 'row on' : 'row'}`} onClick={() => select(n.id)}>
-            <span>
-              <b>{n.name}</b>
-              <br />
-              <small className="sub">{n.designatedTest ? 'designated test network' : 'not a test network'}</small>
-            </span>
-            <span>{n.preset}</span>
-            <span>
-              <span className={`chip ${n.status === 'running' ? 'running' : n.status === 'starting' ? 'deploying' : n.status === 'degraded' ? 'bad' : 'pending'}`}>{n.status}</span>
-            </span>
-            <span>{n.nodeCount}</span>
+            <span className="network-main"><b>{n.name}</b><small>{n.preset} · {n.designatedTest ? 'designated test network' : 'not a test network'}</small></span>
+            <span className="network-meta"><span className={`chip ${n.status === 'running' ? 'running' : n.status === 'starting' ? 'deploying' : n.status === 'degraded' ? 'bad' : 'pending'}`}>{n.status}</span><small>{n.nodeCount} nodes</small></span>
             <span>
               <Btn
                 small

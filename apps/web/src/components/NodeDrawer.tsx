@@ -15,6 +15,7 @@ import { useAsync, useInterval } from '../state/useAsync';
 import type { VNet, VNode } from '../lib/model';
 import { Btn, ErrorBox, Seg, ease } from './ui';
 import { formatUptime, shortId } from './fmt';
+import { REPLAY } from '../lib/mode';
 
 export interface DiagCheck {
   l: string;
@@ -142,14 +143,18 @@ function DrawerBody({ v, net }: { v: VNode; net: VNet }) {
           </div>
           <div className="wide">
             <span>Peer ID</span>
-            <b className="mono-s" title={v.peerId ?? undefined}>{v.peerId ?? 'not derivable (no bootnode multiaddr references this node)'}</b>
+            <b className="mono-s" title={v.peerId ?? undefined}>{v.peerId ?? (REPLAY ? 'not recorded in replay' : 'not derivable (no bootnode multiaddr references this node)')}</b>
           </div>
           <div className="wide">
             <span>Ports</span>
-            <b className="mono-s">
-              p2p {v.record.ports.p2p} · rpc {v.record.ports.rpc} · ws {v.record.ports.ws}
-              {v.record.ports.prometheus ? ` · prometheus ${v.record.ports.prometheus}` : ''}
-            </b>
+            {REPLAY && !v.record.ports.rpc ? (
+              <b className="mono-s">not recorded in replay</b>
+            ) : (
+              <b className="mono-s">
+                p2p {v.record.ports.p2p} · rpc {v.record.ports.rpc} · ws {v.record.ports.ws}
+                {v.record.ports.prometheus ? ` · prometheus ${v.record.ports.prometheus}` : ''}
+              </b>
+            )}
           </div>
           {v.activeFault && (
             <div className="wide">
