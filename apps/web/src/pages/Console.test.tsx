@@ -84,28 +84,28 @@ describe('App shell', () => {
     expect(screen.getByText(/Illustration — the console draws this view/)).toBeInTheDocument();
   });
 
-  it('fits the landing header CTA beside a reduced brand on phone widths', async () => {
+  it('restores the mobile landing header and stacked hero actions without changing desktop rules', async () => {
     renderConsole(<App />, { route: '/', withConsole: false });
     await screen.findByRole('heading', { name: /An upgrade can pass/ });
-    const desktopWidth = window.innerWidth;
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-    window.dispatchEvent(new Event('resize'));
     const brand = screen.getByRole('link', { name: 'Kaizen home' });
     const ctas = document.querySelector('.lnav-cta');
     const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
-    const phoneRules = mobileCss.match(/@media \(max-width:640px\)\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+    const phoneRules = mobileCss.slice(mobileCss.lastIndexOf('@media (max-width:640px)'));
     expect(brand).toBeInTheDocument();
     expect(ctas).toHaveClass('hero-actions');
     expect(ctas?.children).toHaveLength(1);
-    expect(ctas?.children[0]).toHaveClass('sm');
-    expect(phoneRules).toMatch(/\.lnav>\.brand\{[^}]*font-size:16px/);
-    expect(phoneRules).toMatch(/\.lnav \.lnav-cta\.hero-actions\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-    expect(phoneRules).toContain('.lnav .lnav-cta.hero-actions>.btn{box-sizing:border-box;width:100%;min-width:0;min-height:34px;margin:0;padding:0 4px;font-size:10px;gap:0;white-space:nowrap}');
-    expect(phoneRules).toContain('.lnav .lnav-cta.hero-actions>.btn i{display:none}');
-    expect(phoneRules).toContain('.console-brand{display:none}');
+    const launch = within(ctas as HTMLElement).getByRole('button', { name: 'Launch console' });
+    expect(launch).toHaveClass('sm', 'pri');
+    expect(launch.querySelector('i')).toBeInTheDocument();
+    expect(phoneRules).toMatch(/\.lnav>\.brand\{[^}]*font-size:22px/);
+    expect(phoneRules).toContain('.lnav .lnav-cta .btn.ghost{display:none}');
+    expect(phoneRules).toContain('.lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:8px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn{width:100%;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:max-content;max-width:100%;justify-content:space-between;margin:0}');
     expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: desktopWidth });
-    window.dispatchEvent(new Event('resize'));
+    expect(screen.getByRole('button', { name: /Run Drill Now/ })).toBeInTheDocument();
+    expect(within(document.querySelector('.landing .hero .hero-actions') as HTMLElement).getByRole('button', { name: 'Copy npx kaizen up' })).toBeInTheDocument();
   });
 
   it('landing shows real control-plane status and launches the console', async () => {
