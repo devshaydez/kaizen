@@ -62,7 +62,9 @@ describe('App shell', () => {
 
   it('keeps mobile shell navigation and the landing hero inside responsive wrappers', async () => {
     renderConsole(<App />, { route: '/', withConsole: false });
-    expect(await screen.findByRole('heading', { name: /An upgrade can pass/ })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Break it. Fix it. Prove it.' })).toBeInTheDocument();
+    expect(screen.getByText('Resilience platform for Portaldot nodes')).toBeInTheDocument();
+    expect(screen.getByText('Run controlled failures on real multi-node Portaldot networks, watch them recover, and publish operator-attested proof on-chain.')).toBeInTheDocument();
     expect(screen.getByLabelText('Landing')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Launch console' })).toBeInTheDocument();
     const landingBrand = screen.getByRole('link', { name: 'Kaizen home' });
@@ -87,7 +89,7 @@ describe('App shell', () => {
   it('keeps the 390px landing hero CTAs stacked and proportioned, without changing desktop button rules', async () => {
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
     renderConsole(<App />, { route: '/', withConsole: false });
-    await screen.findByRole('heading', { name: /An upgrade can pass/ });
+    await screen.findByRole('heading', { name: 'Break it. Fix it. Prove it.' });
     const brand = screen.getByRole('link', { name: 'Kaizen home' });
     const ctas = document.querySelector('.lnav-cta');
     const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
