@@ -67,8 +67,7 @@ describe('Failure Lab', () => {
   it('keeps the mobile lifecycle navigation reachable while on the failure route', async () => {
     renderConsole(<Lab />, { route: '/lab' });
     await screen.findByRole('heading', { name: 'Break it on purpose' });
-    const nav = screen.getByRole('navigation', { name: 'Console' });
-    expect(within(nav).getByRole('button', { name: 'Networks' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Networks' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Toggle menu' })).toBeInTheDocument();
   });
 

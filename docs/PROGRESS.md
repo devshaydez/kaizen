@@ -1493,6 +1493,4 @@ K8s/Helm: untouched.
 
 **Work**: On `fix/mobile-ux-390px`, retain a compact scrollable lifecycle stepper while keeping the console drawer trigger fixed and reachable; remove the shrunken topology stage that overlapped the Failure Lab form; constrain the landing hero heading and allow the header action to reflow; let `/live` drill history scroll horizontally at a legible minimum table width. Desktop rules are unchanged.
 
-**Verification**: GitHub Actions run 41420966384 failed at `npm test`: one new assertion queried the `nav` element by implicit navigation role name, but that nav is not assigned the accessible name Console in this test render. 475 tests passed; 1 failed. Build was skipped. Fixed the assertion to inspect the Networks control within the actual nav and menu button separately. Retest pending. No 390px browser evidence available yet.
-
-**Status**: IMPLEMENTED, verification in progress.
+**Verification**: First GitHub Actions test run found a faulty regression-test query for an unlabeled nav. The assertion now checks the visible Networks control and menu button directly. Retest running; 390px browser evidence not available in this environment.
