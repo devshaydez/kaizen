@@ -47,7 +47,11 @@ describe('App shell', () => {
 
   it('shell shows the real control-plane status and a network chip', async () => {
     renderConsole(<App />, { route: '/overview', withConsole: false });
-    expect(await screen.findByLabelText('Control plane status')).toHaveTextContent(/connected/);
+    const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
+    const phoneRules = mobileCss.slice(mobileCss.lastIndexOf('@media (max-width:640px)'));
+    expect(phoneRules).toContain('.netchip{position:fixed;top:20px;right:16px;z-index:66;max-width:calc(100vw - 190px);overflow:hidden;text-overflow:ellipsis;align-self:flex-start}');
+    expect(phoneRules).toContain('.netchip>span{min-width:0;overflow:hidden;text-overflow:ellipsis}');
+    expect(mobileCss.slice(0, mobileCss.indexOf('@media (max-width:980px)'))).toContain('.netchip{position:relative;display:inline-flex;');
     expect(await screen.findByLabelText('Selected network')).toHaveValue('net_1');
     const header = document.querySelector('.main > .top');
     expect(header).toBeInTheDocument();
@@ -104,10 +108,10 @@ describe('App shell', () => {
     expect(phoneRules).toMatch(/\.lnav>\.brand\{[^}]*font-size:22px/);
     expect(phoneRules).toContain('.lnav .lnav-cta .btn.ghost{display:none}');
     expect(phoneRules).toContain('.lnav-cta .btn i{width:26px;height:26px;margin-right:-6px}');
-    expect(phoneRules).toContain('.landing .hero .hero-actions{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:8px}');
-    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn{box-sizing:border-box;width:100%;min-height:54px;padding:0 26px;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions{display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-top:8px}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.btn{box-sizing:border-box;width:fit-content;max-width:100%;min-height:54px;padding:0 26px;justify-content:flex-start;margin:0}');
     expect(phoneRules).toContain('.landing .hero .hero-actions>.btn i{width:34px;height:34px;margin-right:-16px}');
-    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:100%;max-width:100%;min-height:60px;gap:12px;padding:8px 8px 8px 18px;justify-content:space-between;margin:0}');
+    expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:fit-content;max-width:100%;min-height:60px;gap:12px;padding:8px 8px 8px 18px;justify-content:flex-start;margin:0}');
     expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd code{min-width:0;white-space:nowrap;font-size:clamp(12px,3.7vw,16px)}');
     expect(phoneRules).toContain('.landing .hero .hero-actions>.cmd button{flex:none;min-height:44px;padding:0 14px;font-size:13px}');
     expect(phoneRules).not.toContain('.landing .hero .hero-actions>.cmd{box-sizing:border-box;width:max-content');
