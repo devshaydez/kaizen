@@ -413,7 +413,8 @@ a.ext{text-decoration:underline;text-underline-offset:3px}
   .steps{display:flex;flex:1;min-width:0;overflow-x:auto;flex-wrap:nowrap;gap:6px;padding:2px 2px 8px;scrollbar-width:thin}
   .steps li{flex:0 0 auto}
   .steps a{min-height:44px;padding:10px 12px}
-  .netchip{max-width:46%;overflow:hidden;text-overflow:ellipsis;align-self:flex-start}
+  .netchip{position:fixed;top:20px;right:16px;z-index:66;max-width:calc(100vw - 190px);overflow:hidden;text-overflow:ellipsis;align-self:flex-start}
+  .netchip>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
   /* tap targets */
   .btn,.nav,.steps a{min-height:44px}
   .btn{white-space:normal}

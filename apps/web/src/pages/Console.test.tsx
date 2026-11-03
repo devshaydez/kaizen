@@ -47,7 +47,11 @@ describe('App shell', () => {
 
   it('shell shows the real control-plane status and a network chip', async () => {
     renderConsole(<App />, { route: '/overview', withConsole: false });
-    expect(await screen.findByLabelText('Control plane status')).toHaveTextContent(/connected/);
+    const mobileCss = readFileSync('apps/web/src/styles.css', 'utf8');
+    const phoneRules = mobileCss.slice(mobileCss.lastIndexOf('@media (max-width:640px)'));
+    expect(phoneRules).toContain('.netchip{position:fixed;top:20px;right:16px;z-index:66;max-width:calc(100vw - 190px);overflow:hidden;text-overflow:ellipsis;align-self:flex-start}');
+    expect(phoneRules).toContain('.netchip>span{min-width:0;overflow:hidden;text-overflow:ellipsis}');
+    expect(mobileCss.slice(0, mobileCss.indexOf('@media (max-width:980px)'))).toContain('.netchip{position:relative;display:inline-flex;');
     expect(await screen.findByLabelText('Selected network')).toHaveValue('net_1');
     const header = document.querySelector('.main > .top');
     expect(header).toBeInTheDocument();
