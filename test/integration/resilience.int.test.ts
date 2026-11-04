@@ -145,17 +145,30 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
           throwOnConnect: true,
         });
         try {
-          const rawEpoch = await api.query['babe']['currentEpoch']();
+          const babe = api.query['babe'] as unknown as Record<string, () => Promise<{ toJSON?: () => unknown; toString: () => string }>>;
+          const raw = async (name: string): Promise<unknown> => {
+            const fn = babe?.[name];
+            if (typeof fn !== 'function') return 'absent';
+            try {
+              const value = await fn();
+              return value.toJSON ? value.toJSON() : value.toString();
+            } catch (e) {
+              return `error: ${e instanceof Error ? e.message : String(e)}`;
+            }
+          };
           console.log(
             'EPOCH DIAG',
             JSON.stringify(
               {
                 at: snapshot.at,
                 discoveryEpoch: snapshot.babeEpoch,
-                rawEpoch: (rawEpoch as { toJSON?: () => unknown }).toJSON?.(),
-                epochIndex: (await api.query['babe']['epochIndex']()).toString(),
-                epochStart: (await api.query['babe']['epochStart']()).toJSON?.(),
-                sessionIndex: (await api.query['session']['currentIndex']()).toString(),
+                keys: Object.keys(babe ?? {}).sort(),
+                epochIndex: await raw('epochIndex'),
+                epochStart: await raw('epochStart'),
+                randomness: await raw('randomness'),
+                genesisSlot: await raw('genesisSlot'),
+                currentSlot: await raw('currentSlot'),
+                babeDuration: api.consts['babe']['epochDuration'].toString(),
                 failedAuthorship: attributed!.authorship,
               },
               null,
