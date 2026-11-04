@@ -15,6 +15,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { ApiPromise, HttpProvider } from '@polkadot/api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   PolkadotConsensusRuntime,
@@ -137,6 +138,34 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       }
       const attributed = await discovery.attribute(snapshot.at);
       expect(attributed, 'BABE pre-digest on the observed best block').not.toBeNull();
+      if (attributed!.authorship.outcome !== 'authored') {
+        const api = await ApiPromise.create({
+          provider: new HttpProvider(`http://127.0.0.1:${observerPort}`),
+          noInitWarn: true,
+          throwOnConnect: true,
+        });
+        try {
+          const rawEpoch = await api.query['babe']['currentEpoch']();
+          console.log(
+            'EPOCH DIAG',
+            JSON.stringify(
+              {
+                at: snapshot.at,
+                discoveryEpoch: snapshot.babeEpoch,
+                rawEpoch: (rawEpoch as { toJSON?: () => unknown }).toJSON?.(),
+                epochIndex: (await api.query['babe']['epochIndex']()).toString(),
+                epochStart: (await api.query['babe']['epochStart']()).toJSON?.(),
+                sessionIndex: (await api.query['session']['currentIndex']()).toString(),
+                failedAuthorship: attributed!.authorship,
+              },
+              null,
+              2,
+            ),
+          );
+        } finally {
+          await api.disconnect();
+        }
+      }
       expect(attributed!.authorship.outcome, attributed!.authorship.reasons.join('; ')).toBe('authored');
       expect(attributed!.authorship.validatorId, 'authority key mapped to a validator account').toBeTruthy();
     } finally {
