@@ -186,10 +186,11 @@ describe('ResilienceService certify / score / verify', () => {
       recoveredAt: '2026-10-24T00:01:12.000Z',
       observations: [
         { phase: 'before-fault', at: '2026-10-24T00:00:00.000Z', best: { number: 100, hash: hashOf(100) }, finalized: { number: 98, hash: hashOf(98) } },
+        { phase: 'during-fault', at: '2026-10-24T00:01:00.000Z', best: { number: 104, hash: hashOf(104) }, finalized: { number: 98, hash: hashOf(98) } },
         { phase: 'after-recovery', at: '2026-10-24T00:01:12.000Z', best: { number: 106, hash: hashOf(106) }, finalized: { number: 103, hash: hashOf(103) } },
       ],
       gaps: [],
-      metrics: { recovered: true, timeToRecoverMs: 12_000, finalityGapBlocks: 3, blocksMissed: null, expectedBlockTimeMs: 6_000 },
+      metrics: { recovered: true, timeToRecoverMs: 12_000, finalityGapBlocks: 6, blocksMissed: 6, expectedBlockTimeMs: 6_000 },
     });
     return s;
   }
@@ -225,7 +226,9 @@ describe('ResilienceService certify / score / verify', () => {
     const score = await svc.score('bob', new Date(cert.signedAt));
     expect(score.runs).toBe(1);
     expect(score.excluded).toEqual([]);
+    expect(score.version).toBe(2);
     expect(score.score).toBeGreaterThan(0);
+    expect(score.excludedReasons).toEqual({});
     expect((await svc.verify(cert.fingerprint)).status).toBe('verified');
     for (const n of store.listNodes('net_1')) store.updateNodeStatus(n.id, 'stopped', null);
     const off = await svc.verify(cert.fingerprint);

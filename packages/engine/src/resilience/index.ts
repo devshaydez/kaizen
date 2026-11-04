@@ -92,7 +92,21 @@ export {
 } from './signer';
 export type { LoadResilienceSignerOptions, ResilienceSigner, ResilienceSignerSource } from './signer';
 export { verifyCertificate, verifyChainEvidence } from './verify';
-export type { BlockCheck, CertificateVerification, ChainCheck, ChainCheckStatus } from './verify';
+export type {
+  BlockCheck,
+  CertificateVerification,
+  CertificateVerdict,
+  ChainCheck,
+  ChainCheckStatus,
+} from './verify';
+export { assessDrill, checkEvidenceIntegrity, scoringFinalityGap } from './integrity';
+export type {
+  ConsensusIntegrity,
+  DrillAssessment,
+  DrillOutcome,
+  EvidenceCheck,
+  EvidenceIntegrity,
+} from './integrity';
 export { RESILIENCE_SCORE_PARAMS, RESILIENCE_SCORE_VERSION, computeResilienceScore, scoreRun } from './score';
 export type { ResilienceScore, ScoredRun, ScoredRunInput } from './score';
 export {

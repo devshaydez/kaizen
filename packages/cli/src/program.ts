@@ -1199,7 +1199,7 @@ export function buildProgram(deps: CliDependencies = {}): Command {
 
   program
     .command('score [validator]')
-    .description('Resilience score v1 (0-100) from certified runs (docs/RESILIENCE_SCORE.md); all validators when omitted')
+    .description('Resilience score v2 (0-100) from eligible certified runs (docs/RESILIENCE_SCORE.md); all validators when omitted')
     .action(async (validator: string | undefined) => {
       await run(async (engine, opts) => {
         const ids = validator !== undefined ? [validator] : engine.resilience.listValidators();

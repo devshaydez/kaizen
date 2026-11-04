@@ -21,6 +21,7 @@ import type { StateStore } from '../state/store';
 import type { NodeRecord } from '../types';
 import { issueCertificate, checkCertificateSignature, type ResilienceCertificate } from './certificate';
 import { ChainEvidenceRecorder, type ChainConsensusCapture, type ChainEvidence } from './evidence';
+import { assessDrill, scoringFinalityGap } from './integrity';
 import { createHttpChainReader, type ChainReader } from './rpc';
 import { computeResilienceScore, type ResilienceScore } from './score';
 import { loadResilienceSigner } from './signer';
@@ -270,21 +271,44 @@ export class ResilienceService {
     return [...new Set(this.store.listResilienceCertificates().map((c) => c.validatorId))].sort();
   }
 
-  /** v1 score over certificates whose offline integrity check passes. */
-  async score(validatorId: string, asOf: Date = new Date()): Promise<ResilienceScore & { excluded: string[] }> {
+  /**
+   * Score over certificates whose offline integrity check passes AND whose
+   * evidence supports a drill outcome. Inconclusive evidence (tampered
+   * metrics, missing phases, underivable metrics) is excluded with a reason;
+   * a `failed` drill is eligible and scores 0 quality. Expected GRANDPA set
+   * transitions are removed from the finality signal before scoring.
+   */
+  async score(
+    validatorId: string,
+    asOf: Date = new Date(),
+  ): Promise<ResilienceScore & { excluded: string[]; excludedReasons: Record<string, string> }> {
     const inputs = [];
     const excluded: string[] = [];
+    const excludedReasons: Record<string, string> = {};
+    const exclude = (fingerprint: string, reason: string) => {
+      excluded.push(fingerprint);
+      excludedReasons[fingerprint] = reason;
+    };
     for (const cert of this.store.listResilienceCertificates({ validatorId })) {
       let run;
       try {
         run = this.store.getScenarioRun(cert.runId);
       } catch {
-        excluded.push(cert.fingerprint);
+        exclude(cert.fingerprint, 'run record is no longer available');
         continue;
       }
       const check = await checkCertificateSignature(cert, run);
       if (!check.fingerprintMatches || !check.signatureValid || !check.addressMatchesKey || !check.metadataMatches) {
-        excluded.push(cert.fingerprint);
+        exclude(cert.fingerprint, 'certificate integrity check failed');
+        continue;
+      }
+      const assessment = assessDrill(cert.chain, run.state);
+      if (typeof cert.evidenceHash === 'string' && cert.evidenceHash !== assessment.integrity.evidenceHash) {
+        exclude(cert.fingerprint, 'stored evidenceHash does not match the evidence document');
+        continue;
+      }
+      if (assessment.outcome === 'inconclusive') {
+        exclude(cert.fingerprint, `evidence inconclusive: ${assessment.reasons.join('; ')}`);
         continue;
       }
       inputs.push({
@@ -292,12 +316,14 @@ export class ResilienceService {
         runState: run.state,
         recovered: cert.chain.metrics.recovered,
         timeToRecoverMs: cert.chain.metrics.timeToRecoverMs,
-        finalityGapBlocks: cert.chain.metrics.finalityGapBlocks,
+        finalityGapBlocks: scoringFinalityGap(cert.chain),
         blocksMissed: cert.chain.metrics.blocksMissed,
         certifiedAt: cert.signedAt,
+        evidenceOutcome: assessment.outcome,
+        consensusComplete: cert.chain.consensus ? !cert.chain.consensus.incomplete : false,
       });
     }
-    return { ...computeResilienceScore(validatorId, inputs, asOf), excluded };
+    return { ...computeResilienceScore(validatorId, inputs, asOf), excluded, excludedReasons };
   }
 
   /** Reader for a network's chain, or null when no node is running (offline). */

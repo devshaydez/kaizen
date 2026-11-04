@@ -19,6 +19,7 @@ import type { ScenarioRunRecord } from '../scenario/run-types';
 import { checkCertificateSignature, type ResilienceCertificate, type SignatureCheck } from './certificate';
 import type { ChainConsensusEvidence } from './consensus';
 import type { ChainEvidence } from './evidence';
+import { assessDrill, type DrillAssessment } from './integrity';
 import { ChainUnreachableError, type ChainReader } from './rpc';
 
 export type ChainCheckStatus = 'verified' | 'mismatch' | 'unverifiable';
@@ -38,14 +39,27 @@ export interface ChainCheck {
   checks: BlockCheck[];
 }
 
+/**
+ * Certificate verdict. `mismatch` always wins (tamper/contradiction);
+ * `unverifiable` means the network could not be reached; `inconclusive`
+ * means the evidence itself cannot support the drill outcome (missing
+ * phases/metrics, or incomplete consensus context) even though the binding
+ * checks passed.
+ */
+export type CertificateVerdict = ChainCheckStatus | 'inconclusive';
+
 export interface CertificateVerification {
-  status: ChainCheckStatus;
+  status: CertificateVerdict;
   reasons: string[];
   integrity: SignatureCheck;
   chain: ChainCheck;
   devKey: boolean;
   /** Consensus context captured with the evidence (null when absent). */
   consensus: ChainConsensusEvidence | null;
+  /** Recomputed drill assessment (outcome + evidence checks). */
+  evidence: DrillAssessment;
+  /** Stored evidenceHash vs recomputation; null for legacy certificates. */
+  evidenceHashMatches: boolean | null;
 }
 
 export async function verifyChainEvidence(evidence: ChainEvidence, reader: ChainReader | null): Promise<ChainCheck> {
@@ -99,14 +113,31 @@ export async function verifyCertificate(
   const integrity = await checkCertificateSignature(cert, run);
   const chain = await verifyChainEvidence(cert.chain, reader);
   const consensus = cert.chain.consensus ?? null;
+  const evidence = assessDrill(cert.chain, run.state);
   const reasons: string[] = [];
   if (!integrity.fingerprintMatches) reasons.push('fingerprint does not match the stored run + evidence');
   if (!integrity.metadataMatches) reasons.push('certificate metadata does not match the signed run + evidence');
   if (!integrity.signatureValid) reasons.push('sr25519 signature is invalid');
   if (!integrity.addressMatchesKey) reasons.push('signer address does not match the public key');
-  if (consensus?.incomplete) {
-    reasons.push('consensus context incomplete: BABE authorship / GRANDPA finality context was not fully established');
+
+  const evidenceHashMatches =
+    typeof cert.evidenceHash === 'string' ? cert.evidenceHash === evidence.integrity.evidenceHash : null;
+  if (evidenceHashMatches === false) {
+    reasons.push('stored evidenceHash does not match the recomputed evidence document');
   }
+  reasons.push(`drill outcome: ${evidence.outcome} (${evidence.reasons.join('; ')})`);
+  if (!evidence.integrity.metricsMatch) reasons.push('evidence metrics do not match a recomputation from the observations');
+  if (!evidence.integrity.observationsValid) reasons.push('evidence contains malformed block references');
+  if (!evidence.integrity.timestampsConsistent) reasons.push('evidence timestamps are inconsistent');
+
+  if (consensus === null) {
+    reasons.push('no consensus context: chain-bound recovery evidence only (no BABE/GRANDPA claim)');
+  } else if (consensus.incomplete) {
+    reasons.push(
+      `consensus context incomplete: ${consensus.incompleteReasons.join('; ') || 'BABE authorship / GRANDPA finality context was not fully established'}`,
+    );
+  }
+
   const integrityOk =
     integrity.fingerprintMatches &&
     integrity.signatureValid &&
@@ -114,6 +145,20 @@ export async function verifyCertificate(
     integrity.metadataMatches;
   reasons.push(`chain: ${chain.reason}`);
   if (cert.signature.dev) reasons.push('DEV KEY: signed with a public test key — proves integrity, not operator identity');
-  const status: ChainCheckStatus = !integrityOk || chain.status === 'mismatch' ? 'mismatch' : chain.status;
-  return { status, reasons, integrity, chain, devKey: cert.signature.dev, consensus };
+
+  const tampered =
+    !integrityOk ||
+    chain.status === 'mismatch' ||
+    evidenceHashMatches === false ||
+    !evidence.integrity.metricsMatch ||
+    !evidence.integrity.observationsValid ||
+    !evidence.integrity.timestampsConsistent;
+  const status: CertificateVerdict = tampered
+    ? 'mismatch'
+    : chain.status === 'unverifiable'
+      ? 'unverifiable'
+      : evidence.outcome === 'inconclusive' || (consensus !== null && consensus.incomplete)
+        ? 'inconclusive'
+        : 'verified';
+  return { status, reasons, integrity, chain, devKey: cert.signature.dev, consensus, evidence, evidenceHashMatches };
 }

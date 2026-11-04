@@ -25,6 +25,7 @@ import type { ScenarioRunRecord } from '../scenario/run-types';
 import { isTerminalScenarioRunState } from '../scenario/run-types';
 import { canonicalJson, computeRunHash, sha256Hex } from '../v3/anchor/canonical';
 import type { ChainEvidence } from './evidence';
+import { assessDrill, type DrillOutcome } from './integrity';
 import type { ResilienceSigner, ResilienceSignerSource } from './signer';
 
 export const KAIZEN_CERTIFICATE_VERSION = 1 as const;
@@ -57,6 +58,14 @@ export interface ResilienceCertificate {
   signature: CertificateSignature;
   /** When the certificate was signed (not part of the fingerprint). */
   signedAt: string;
+  /**
+   * SHA-256 of the canonical chain evidence at issue time. The fingerprint
+   * already binds the evidence; this makes a stored/copied document
+   * comparable in one word. Optional for certificates issued before T-9.7C.
+   */
+  evidenceHash?: string;
+  /** Drill assessment at issue time (informational; re-derived on verify). */
+  outcome?: DrillOutcome;
 }
 
 export function certificateDocument(run: ScenarioRunRecord, chain: ChainEvidence): string {
@@ -96,6 +105,7 @@ export async function issueCertificate(input: {
   await cryptoWaitReady();
   const fingerprint = computeCertificateFingerprint(run, chain);
   const signature = u8aToHex(signer.pair.sign(certificateMessage(fingerprint)));
+  const assessment = assessDrill(chain, run.state);
   return {
     version: KAIZEN_CERTIFICATE_VERSION,
     fingerprint,
@@ -113,6 +123,8 @@ export async function issueCertificate(input: {
       signature,
     },
     signedAt: (input.now ?? (() => new Date()))().toISOString(),
+    evidenceHash: assessment.integrity.evidenceHash,
+    outcome: assessment.outcome,
   };
 }
 

@@ -170,6 +170,58 @@ observed; a phase is not "verified" because code exists.
 
 ---
 
+## Phase C — Evidence, certificate and score integrity (2026-11-04)
+
+### Implemented
+
+- **Evidence recomputation** (`integrity.ts`): `checkEvidenceIntegrity`
+  re-derives every metric with `computeRecoveryMetrics` and compares it with
+  the stored document, validates every block reference and `finalized ≤ best`,
+  checks phase order against the fault window, requires all three phases, and
+  returns an `evidenceHash` (SHA-256 over canonical evidence).
+- **Drill outcome**: `assessDrill` returns `passed` / `failed` / `inconclusive`.
+  A no-recovery drill with complete observations is `failed` (not
+  inconclusive); a tampered or incomplete document is `inconclusive`; a valid
+  signature does not upgrade either.
+- **Certificates**: new certificates carry `evidenceHash` and `outcome`.
+  These fields are intentionally outside the signed fingerprint document
+  (which is unchanged, so v1 certificates still verify); verification
+  recomputes and compares them. Legacy certificates without the fields are
+  accepted and reported as such, not invalidated.
+- **Verification**: `CertificateVerification` now includes a recomputed
+  `evidence` assessment, `evidenceHashMatches`, and a `CertificateVerdict`
+  that adds `inconclusive` (valid signature + verified chain + incomplete
+  consensus or incomplete evidence). Tampering (fingerprint, metrics,
+  timestamps, evidenceHash) is `mismatch`; an unreachable network is
+  `unverifiable`.
+- **Score v2** (`score.ts`, `docs/RESILIENCE_SCORE.md`): missing metrics are
+  excluded from the quality average instead of scored as catastrophic;
+  `coverage` is reported and multiplies confidence; `evidenceOutcome =
+  inconclusive` is never survived; expected GRANDPA transitions are removed
+  from the finality signal via `scoringFinalityGap`; the service excludes
+  ineligible certificates with a reason. Worked examples A–F are unchanged
+  when all metrics are measured.
+
+### Tests and results (actual)
+
+- `npx vitest run --config vitest.config.mts packages/engine/test/resilience-*.test.ts`
+  → 9 files, **118 passed** (13 new integrity tests; score/verify/certificate
+  suites extended).
+- `npx tsc -p packages/engine --noEmit` → clean.
+- No live-network run (arm64 sandbox).
+
+### Known limitations
+
+- Consensus absence is reported, not treated as tampering; consensus-present
+  but incomplete makes the certificate verdict `inconclusive`.
+- Evidence-class weighting (chain-observed vs chain-bound) and seeded drills
+  remain the planned v3 trust model; v2 does not claim absolute reliability.
+- `evidenceHash` is not part of the signature. The signed fingerprint already
+  binds the full evidence; the hash is a convenience whose mismatch is still
+  detected by verification, but it is not an independent signature.
+
+---
+
 ## Previous report (Phase 9, T-3.6C and T-9.1–T-9.5)
 
 # Phase 9 and Console Status Report: T-3.6C and T-9.1 to T-9.5

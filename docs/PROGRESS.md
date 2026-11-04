@@ -1,3 +1,13 @@
+## 2026-11-04 — T-9.7C: evidence, certificate and score integrity
+
+**Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `packages/engine/src/resilience/integrity.ts` (new), `certificate.ts`, `verify.ts`, `score.ts`, `service.ts`, `index.ts`, `packages/engine/test/resilience-integrity.test.ts` (new), `resilience-certificate.test.ts`, `resilience-verify.test.ts`, `resilience-score.test.ts`, `resilience-service.test.ts`, `packages/cli/src/program.ts`, `docs/RESILIENCE_SCORE.md`, `docs/PHASE_REPORT.md`.
+**Work done**: Evidence integrity now recomputes metrics and validates block references, finalized ≤ best, phase order and fault-window consistency; it produces a canonical evidence hash. `assessDrill` classifies passed/failed/inconclusive (a complete no-recovery drill is failed; tampered/incomplete evidence is inconclusive). Certificates record `evidenceHash` and `outcome` (outside the signed document so v1 certificates still verify) and verification compares them. `CertificateVerdict` adds `inconclusive` for valid signatures with incomplete consensus/evidence, while tampering stays `mismatch` and an offline network stays `unverifiable`. Score v2 renormalises quality over measured metrics, reports coverage, multiplies confidence by coverage, excludes inconclusive evidence, and removes expected GRANDPA transitions from the finality signal. Score v1 worked examples A–F remain unchanged when all metrics are measured. The planned trust model is renumbered v3 in the spec to avoid overloading the score version.
+**Verification**: `npx vitest run --config vitest.config.mts packages/engine/test/resilience-*.test.ts` → 9 files, **118/118 passed**. `npx tsc -p packages/engine --noEmit` → clean. Live-network verification not run (arm64, no `portaldot_dev`).
+**Problems / decisions**: `evidenceHash`/`outcome` are not signed (the fingerprint binds the evidence); verification recomputes them, and a mismatch is reported as `mismatch`. Legacy certificates remain valid. Consensus absence is a capability note, not an integrity failure.
+**Next step**: Phase D — contract/anchoring evaluation and read-only anchoring verification hardening.
+
+---
+
 ## 2026-11-04 — T-9.7B: consensus-aware evidence and validator discovery
 
 **Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `packages/engine/src/resilience/consensus.ts` (rewritten), `discovery.ts` (new), `consensus-runtime.ts` (new), `evidence.ts`, `service.ts`, `index.ts`, `packages/engine/src/engine.ts`, `packages/engine/test/resilience-consensus.test.ts` (rewritten), `packages/engine/test/resilience-discovery.test.ts` (new), `test/integration/resilience.int.test.ts`, `docs/TECHNICAL_RESEARCH.md` (R-25), `docs/PHASE_REPORT.md`.
