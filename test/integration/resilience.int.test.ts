@@ -128,10 +128,7 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
     try {
       const incomplete = ev!.consensus!.incompleteReasons.join('; ') || 'none';
       expect(ev!.consensus!.authorings.length, `BABE authorship observations (${incomplete})`).toBeGreaterThan(0);
-      expect(
-        ev!.consensus!.authorings.filter((a) => a.outcome === 'authored' && a.validatorId !== null).length,
-        `confidently attributed blocks (${incomplete})`,
-      ).toBeGreaterThan(0);
+
       expect(ev!.consensus!.authoritySets.length, 'authority sets used for attribution').toBeGreaterThan(0);
       expect(ev!.consensus!.finality.length, 'GRANDPA finality observations').toBeGreaterThan(0);
 
@@ -147,6 +144,27 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       } else {
         expect(snapshot.grandpaAuthorities.length, 'grandpa.authorities').toBeGreaterThan(0);
       }
+      const confidentlyAttributed = ev!.consensus!.authorings.filter(
+        (a) => a.outcome === 'authored' && a.validatorId !== null,
+      );
+      if (confidentlyAttributed.length === 0) {
+        console.log(
+          'MAPPING DIAG',
+          JSON.stringify(
+            {
+              unavailable: snapshot.unavailable,
+              validators: snapshot.validators.slice(0, 4),
+              nextValidators: snapshot.nextValidators.slice(0, 2),
+              authorities: snapshot.babeAuthorities?.slice(0, 4) ?? null,
+              authorings: ev!.consensus!.authorings.slice(-3),
+            },
+            null,
+            2,
+          ),
+        );
+      }
+      expect(confidentlyAttributed.length, `confidently attributed blocks (${incomplete})`).toBeGreaterThan(0);
+
       const attributed = await discovery.attribute(snapshot.at);
       expect(attributed, 'BABE pre-digest on the observed best block').not.toBeNull();
       expect(attributed!.authorship.outcome, attributed!.authorship.reasons.join('; ')).toBe('authored');
