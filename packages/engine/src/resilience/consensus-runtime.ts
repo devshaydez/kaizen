@@ -327,9 +327,10 @@ class PolkadotView implements ConsensusRuntimeView {
 
   async babeEpoch(): Promise<BabeEpochContext | null> {
     const epochRaw = await this.call<unknown>('babe', 'epochIndex').catch(() => null);
-    const [startRaw, randomnessRaw] = await Promise.all([
+    const [startRaw, randomnessRaw, genesisRaw] = await Promise.all([
       this.call<unknown>('babe', 'epochStart').catch(() => null),
       this.call<unknown>('babe', 'randomness').catch(() => null),
+      this.call<unknown>('babe', 'genesisSlot').catch(() => null),
     ]);
     const epoch = numberFrom(epochRaw);
     const startTuple = tupleNumbers(startRaw);
@@ -341,6 +342,7 @@ class PolkadotView implements ConsensusRuntimeView {
       epoch,
       startSlot: startTuple?.[1] ?? null,
       durationSlots,
+      genesisSlot: numberFrom(genesisRaw),
       randomness,
     };
   }

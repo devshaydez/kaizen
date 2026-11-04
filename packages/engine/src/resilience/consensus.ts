@@ -136,6 +136,13 @@ export interface BabeEpochContext {
   startSlot: number | null;
   /** Epoch duration in slots (`babe.epochDuration`), when readable. */
   durationSlots: number | null;
+  /**
+   * Chain genesis slot (`babe.genesisSlot`), when readable. Used only to
+   * reject epoch bounds that predate genesis: a dev chain can report
+   * `EpochStart = (0, 0)` while its slots are wall-clock based, and such
+   * bounds cannot describe the block's epoch.
+   */
+  genesisSlot?: number | null;
   /** Epoch randomness, 0x-prefixed 32 bytes, when readable. */
   randomness: string | null;
 }
@@ -249,14 +256,21 @@ export function attributeBabeAuthorship(input: AttributeBabeInput): BabeAuthorsh
   }
   let fatal = false;
 
-  if (authoritySet.startSlot !== null && authoritySet.durationSlots !== null) {
-    const end = authoritySet.startSlot + authoritySet.durationSlots;
-    if (digest.slot < authoritySet.startSlot || digest.slot >= end) {
+  const startSlot = authoritySet.startSlot;
+  const durationSlots = authoritySet.durationSlots;
+  const genesisSlot = authoritySet.genesisSlot ?? null;
+  if (startSlot !== null && durationSlots !== null && (genesisSlot === null || startSlot >= genesisSlot)) {
+    const end = startSlot + durationSlots;
+    if (digest.slot < startSlot || digest.slot >= end) {
       reasons.push(
-        `slot ${digest.slot} is outside epoch ${authoritySet.epoch ?? '?'} bounds [${authoritySet.startSlot}, ${end}): the epoch authority set does not match the block`,
+        `slot ${digest.slot} is outside epoch ${authoritySet.epoch ?? '?'} bounds [${startSlot}, ${end}): the epoch authority set does not match the block`,
       );
       fatal = true;
     }
+  } else if (startSlot !== null && durationSlots !== null) {
+    reasons.push(
+      `epoch start slot ${startSlot} precedes genesis slot ${genesisSlot}: the recorded epoch bounds are not usable, so slot membership was not checked`,
+    );
   } else {
     reasons.push('epoch start slot / duration unavailable: slot membership in the observed epoch was not checked');
   }

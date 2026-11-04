@@ -281,6 +281,7 @@ export class ValidatorDiscovery {
       epoch: epoch?.epoch ?? null,
       startSlot: epoch?.startSlot ?? null,
       durationSlots: epoch?.durationSlots ?? null,
+      genesisSlot: epoch?.genesisSlot ?? null,
       randomness: epoch?.randomness ?? null,
       authorities:
         authorities?.map((a, index): BabeAuthority => ({

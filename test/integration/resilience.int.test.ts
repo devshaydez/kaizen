@@ -15,7 +15,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ApiPromise, HttpProvider } from '@polkadot/api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   PolkadotConsensusRuntime,
@@ -121,6 +120,10 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
     try {
       const incomplete = ev!.consensus!.incompleteReasons.join('; ') || 'none';
       expect(ev!.consensus!.authorings.length, `BABE authorship observations (${incomplete})`).toBeGreaterThan(0);
+      expect(
+        ev!.consensus!.authorings.filter((a) => a.outcome === 'authored' && a.validatorId !== null).length,
+        `confidently attributed blocks (${incomplete})`,
+      ).toBeGreaterThan(0);
       expect(ev!.consensus!.authoritySets.length, 'authority sets used for attribution').toBeGreaterThan(0);
       expect(ev!.consensus!.finality.length, 'GRANDPA finality observations').toBeGreaterThan(0);
 
@@ -138,47 +141,6 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       }
       const attributed = await discovery.attribute(snapshot.at);
       expect(attributed, 'BABE pre-digest on the observed best block').not.toBeNull();
-      if (attributed!.authorship.outcome !== 'authored') {
-        const api = await ApiPromise.create({
-          provider: new HttpProvider(`http://127.0.0.1:${observerPort}`),
-          noInitWarn: true,
-          throwOnConnect: true,
-        });
-        try {
-          const babe = api.query['babe'] as unknown as Record<string, () => Promise<{ toJSON?: () => unknown; toString: () => string }>>;
-          const raw = async (name: string): Promise<unknown> => {
-            const fn = babe?.[name];
-            if (typeof fn !== 'function') return 'absent';
-            try {
-              const value = await fn();
-              return value.toJSON ? value.toJSON() : value.toString();
-            } catch (e) {
-              return `error: ${e instanceof Error ? e.message : String(e)}`;
-            }
-          };
-          console.log(
-            'EPOCH DIAG',
-            JSON.stringify(
-              {
-                at: snapshot.at,
-                discoveryEpoch: snapshot.babeEpoch,
-                keys: Object.keys(babe ?? {}).sort(),
-                epochIndex: await raw('epochIndex'),
-                epochStart: await raw('epochStart'),
-                randomness: await raw('randomness'),
-                genesisSlot: await raw('genesisSlot'),
-                currentSlot: await raw('currentSlot'),
-                babeDuration: api.consts['babe']['epochDuration'].toString(),
-                failedAuthorship: attributed!.authorship,
-              },
-              null,
-              2,
-            ),
-          );
-        } finally {
-          await api.disconnect();
-        }
-      }
       expect(attributed!.authorship.outcome, attributed!.authorship.reasons.join('; ')).toBe('authored');
       expect(attributed!.authorship.validatorId, 'authority key mapped to a validator account').toBeTruthy();
     } finally {

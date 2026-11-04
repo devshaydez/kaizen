@@ -176,6 +176,23 @@ describe('attributeBabeAuthorship', () => {
     expect(a.reasons.join(' ')).toMatch(/outside epoch 0 bounds/);
   });
 
+  it('ignores epoch bounds that predate genesis instead of blaming the block', () => {
+    // Observed on portaldot_dev: genesisSlot 298971472, currentSlot
+    // 298971478, but EpochStart is stored as (0, 0). Those bounds cannot be
+    // the block's epoch, so membership is noted as unchecked, not fatal.
+    const slot = 298971478;
+    const zeroRandomness = `0x${'00'.repeat(32)}`;
+    const index = babeSecondaryAuthorIndex(zeroRandomness, slot, 2);
+    const a = attributeBabeAuthorship({
+      block: { number: 5, hash: hash(5) },
+      authoritySet: set({ startSlot: 0, durationSlots: 1200, genesisSlot: 298971472, randomness: zeroRandomness }),
+      digest: digest({ kind: 'secondary-plain', authorityIndex: index, slot }),
+    });
+    expect(a.outcome).toBe('authored');
+    expect(a.verification).toBe('digest+secondary-rule');
+    expect(a.reasons.join(' ')).toMatch(/precedes genesis slot .* not usable/);
+  });
+
   it('marks an unmapped authority as authored-but-unattributed', () => {
     const a = attributeBabeAuthorship({
       block: { number: 3, hash: hash(3) },
