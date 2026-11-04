@@ -105,6 +105,71 @@ observed; a phase is not "verified" because code exists.
 
 ---
 
+## Phase B — Consensus and validator discovery (2026-11-04)
+
+### Implemented
+
+- **BABE authorship is digest-based, not slot-derived.**
+  `decodeBabePreDigest` decodes the SCALE enum from Substrate
+  (`1 Primary`, `2 SecondaryPlain`, `3 SecondaryVRF`; `authority_index: u32`
+  then `slot: u64`) and `attributeBabeAuthorship` resolves the author through
+  the authority set read in the block's own state. For secondary slots the
+  digest index is cross-checked with
+  `U256::from_big_endian(blake2_256((epoch_randomness, slot).encode())) % authorities_len`
+  (the literal `sc-consensus-babe` rule).
+- **Conservative attribution.** Missing authority list, an authority index
+  outside the observed set, a slot outside `[epochStart, epochStart+duration)`,
+  or a secondary-rule disagreement makes the record `inconclusive` with
+  reasons; no validator id is emitted in those cases.
+- **Session/epoch transitions preserved.** Each authorship record carries the
+  epoch, epoch start/duration, `authoritySetId`, raw authority key and resolved
+  validator id. The evidence stores every authority set used, plus observed
+  BABE epoch transitions.
+- **GRANDPA setId tracking.** Transitions are recorded with `fromSetId`,
+  `toSetId`, finalized block and time, validated for duplicates/non-increasing
+  ids, and used to classify finality lags as `normal`, `expected-transition`,
+  `stalled`, or `unknown`. A set change across an observation is expected
+  protocol behaviour even when the transition record was built later.
+- **Dynamic, read-only validator discovery.** `ValidatorDiscovery` queries
+  `session.validators`, `session.queuedKeys`, `session.nextKeys`,
+  `session.currentIndex`, `babe.authorities`, `grandpa.authorities`, epoch
+  context, `grandpa.currentSetId`, and staking era context over
+  `@polkadot/api`. It caches one snapshot per block hash, reads historical
+  blocks at that block's hash, maps BABE/GRANDPA keys to validator accounts,
+  and records failed/absent queries in `unavailable`. Era points are context
+  only and are never used for BABE identity.
+
+### Files
+
+`packages/engine/src/resilience/consensus.ts` (rewritten),
+`discovery.ts` (new), `consensus-runtime.ts` (new), `evidence.ts`,
+`service.ts`, `index.ts`, `packages/engine/src/engine.ts`;
+`packages/engine/test/resilience-consensus.test.ts` (rewritten),
+`packages/engine/test/resilience-discovery.test.ts` (new),
+`test/integration/resilience.int.test.ts`.
+
+### Tests and results (actual)
+
+- `npx vitest run --config vitest.config.mts packages/engine/test/resilience-*.test.ts`
+  → 8 files, **97 passed** (26 consensus + 13 discovery are new/replaced).
+- `npx tsc -p packages/engine --noEmit` → clean.
+- Live assertions added but **not run locally** (arm64, no `portaldot_dev`);
+  they require the x86_64 `resilience-live.yml` run.
+
+### Known limitations
+
+- `staking.erasRewardPoints` on `portaldot_dev` is unverified; discovery
+  reports it unavailable rather than fabricating points.
+- Live mapping of authority keys to validator accounts depends on
+  `session.queuedKeys` / `session.nextKeys` being present and named as such on
+  Portaldot; if not, authorship is `authored` but `validatorId` stays null and
+  the evidence is marked incomplete with that reason.
+- The discovery snapshot performs one read per listed storage item at capture
+  points; it is cached per block but has not been load-tested against the
+  shared public endpoint.
+
+---
+
 ## Previous report (Phase 9, T-3.6C and T-9.1–T-9.5)
 
 # Phase 9 and Console Status Report: T-3.6C and T-9.1 to T-9.5

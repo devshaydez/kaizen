@@ -19,6 +19,8 @@ import { ScenarioEngine } from './scenario/runner';
 import { StateStore } from './state/store';
 import { V3AnchorService } from './v3/anchor/service';
 import { ResilienceService } from './resilience/service';
+import { createNodeConsensusCapture } from './resilience/consensus-runtime';
+import { httpUrlForPort } from './process/args';
 
 export const KAIZEN_VERSION = '0.1.0';
 
@@ -39,6 +41,10 @@ export interface EngineOptions {
   /** Capture chain evidence around scenario runs (T-9.5). Default:
    *  KAIZEN_RESILIENCE_EVIDENCE=1. */
   resilienceCapture?: boolean;
+  /** Read BABE/GRANDPA/session/era context from the observer node while
+   *  capturing evidence (T-9.7B). Default: enabled; set false to record
+   *  chain-bound evidence without consensus context. */
+  consensusCapture?: boolean;
 }
 
 export interface KaizenEngine {
@@ -153,7 +159,15 @@ export function createEngine(options: EngineOptions = {}): KaizenEngine {
   // NEVER resumes execution. (Kicked off now; awaited in close().)
   void scenarioRuns.reconcileOnStartup();
   const v3Anchors = new V3AnchorService({ store, events });
-  const resilience = new ResilienceService({ store, events, capture: options.resilienceCapture });
+  const resilience = new ResilienceService({
+    store,
+    events,
+    capture: options.resilienceCapture,
+    consensus:
+      options.consensusCapture === false
+        ? undefined
+        : (observer) => createNodeConsensusCapture(httpUrlForPort(observer.ports.rpc)),
+  });
 
   return {
     dataDir,

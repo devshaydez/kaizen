@@ -20,7 +20,7 @@ import { httpUrlForPort } from '../process/args';
 import type { StateStore } from '../state/store';
 import type { NodeRecord } from '../types';
 import { issueCertificate, checkCertificateSignature, type ResilienceCertificate } from './certificate';
-import { ChainEvidenceRecorder, type ChainEvidence } from './evidence';
+import { ChainEvidenceRecorder, type ChainConsensusCapture, type ChainEvidence } from './evidence';
 import { createHttpChainReader, type ChainReader } from './rpc';
 import { computeResilienceScore, type ResilienceScore } from './score';
 import { loadResilienceSigner } from './signer';
@@ -36,6 +36,14 @@ export interface ResilienceServiceOptions {
   recoveryTimeoutMs?: number;
   recoveryIntervalMs?: number;
   env?: NodeJS.ProcessEnv;
+  /**
+   * Consensus capture source (BABE authorship / GRANDPA finality / era).
+   * A factory receives the observer node and should read that node's own
+   * endpoint. Optional: when absent, recorded evidence carries no consensus
+   * context and is honestly marked incomplete for consensus (never
+   * fabricated).
+   */
+  consensus?: ChainConsensusCapture | ((observer: NodeRecord) => ChainConsensusCapture | undefined);
 }
 
 interface ActiveCapture {
@@ -55,6 +63,8 @@ export class ResilienceService {
   private readonly active = new Map<string, ActiveCapture>(); // by networkId
   private readonly unsubs: Array<() => void> = [];
   private readonly pending = new Set<Promise<void>>();
+  private readonly consensusByNode = new Map<string, ChainConsensusCapture | null>();
+  private readonly ownedCaptures = new Set<{ close(): Promise<void> }>();
   readonly captureEnabled: boolean;
 
   constructor(private readonly opts: ResilienceServiceOptions) {
@@ -129,7 +139,21 @@ export class ResilienceService {
       validatorId: cap.validatorId ?? 'unknown',
       observerNodeId: observer.id,
       reader: this.readerForNode(observer),
+      consensus: this.consensusFor(observer),
     });
+  }
+
+  /** Resolve (and own, for lifecycle) the consensus source for one observer. */
+  private consensusFor(observer: NodeRecord): ChainConsensusCapture | undefined {
+    const cached = this.consensusByNode.get(observer.id);
+    if (cached !== undefined) return cached ?? undefined;
+    const source = this.opts.consensus;
+    const resolved = typeof source === 'function' ? source(observer) : source;
+    this.consensusByNode.set(observer.id, resolved ?? null);
+    if (resolved && typeof (resolved as unknown as { close?: unknown }).close === 'function') {
+      this.ownedCaptures.add(resolved as unknown as { close(): Promise<void> });
+    }
+    return resolved;
   }
 
   private onFault(p: KaizenEventMap['fault.state']): void {
@@ -182,6 +206,11 @@ export class ResilienceService {
   async close(): Promise<void> {
     for (const u of this.unsubs.splice(0)) u();
     await this.idle();
+    for (const capture of this.ownedCaptures) {
+      await capture.close().catch(() => undefined);
+    }
+    this.ownedCaptures.clear();
+    this.consensusByNode.clear();
   }
 
   // -------------------------------------------------------------------------

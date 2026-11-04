@@ -16,7 +16,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createEngine, type KaizenEngine, type ScenarioInput } from '@kaizen/engine';
+import {
+  PolkadotConsensusRuntime,
+  ValidatorDiscovery,
+  createEngine,
+  type KaizenEngine,
+  type ScenarioInput,
+} from '@kaizen/engine';
 import { LIVE, SHARED_BIN_CACHE, ensureSharedBinary, httpRpc, testRoot, waitFor } from './testkit';
 
 interface Health {
@@ -102,6 +108,28 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
     // Independent check: every captured hash is the canonical hash at that number.
     for (const o of ev!.observations) {
       expect(await httpRpc<string>(observerPort, 'chain_getBlockHash', [o.finalized.number])).toBe(o.finalized.hash);
+    }
+
+    // Consensus evidence captured from the observer's own runtime state. This
+    // asserts real reads against the running network: session validators,
+    // BABE authorities, GRANDPA authorities, and one attributed block.
+    expect(ev!.consensus, 'consensus capture was wired for the drill').not.toBeNull();
+    expect(ev!.consensus!.authorings.length, 'BABE authorship observations').toBeGreaterThan(0);
+    expect(ev!.consensus!.authoritySets.length, 'authority sets used for attribution').toBeGreaterThan(0);
+    const discovery = new ValidatorDiscovery({
+      runtime: new PolkadotConsensusRuntime({ rpcUrl: `http://127.0.0.1:${observerPort}` }),
+    });
+    try {
+      const snapshot = await discovery.snapshot();
+      expect(snapshot.validators.length, 'session.validators / session.queuedKeys').toBeGreaterThan(0);
+      expect(snapshot.babeAuthorities?.length ?? 0, 'babe.authorities').toBeGreaterThan(0);
+      expect(snapshot.grandpaAuthorities?.length ?? 0, 'grandpa.authorities').toBeGreaterThan(0);
+      const attributed = await discovery.attribute(snapshot.at);
+      expect(attributed, 'BABE pre-digest on the observed best block').not.toBeNull();
+      expect(attributed!.authorship.outcome, attributed!.authorship.reasons.join('; ')).toBe('authored');
+      expect(attributed!.authorship.validatorId, 'authority key mapped to a validator account').toBeTruthy();
+    } finally {
+      await discovery.close();
     }
 
     const cert = await engine.resilience.certifyRun(run.id, { allowDevKey: true });

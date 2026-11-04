@@ -17,6 +17,7 @@
 
 import type { ScenarioRunRecord } from '../scenario/run-types';
 import { checkCertificateSignature, type ResilienceCertificate, type SignatureCheck } from './certificate';
+import type { ChainConsensusEvidence } from './consensus';
 import type { ChainEvidence } from './evidence';
 import { ChainUnreachableError, type ChainReader } from './rpc';
 
@@ -43,6 +44,8 @@ export interface CertificateVerification {
   integrity: SignatureCheck;
   chain: ChainCheck;
   devKey: boolean;
+  /** Consensus context captured with the evidence (null when absent). */
+  consensus: ChainConsensusEvidence | null;
 }
 
 export async function verifyChainEvidence(evidence: ChainEvidence, reader: ChainReader | null): Promise<ChainCheck> {
@@ -95,11 +98,15 @@ export async function verifyCertificate(
 ): Promise<CertificateVerification> {
   const integrity = await checkCertificateSignature(cert, run);
   const chain = await verifyChainEvidence(cert.chain, reader);
+  const consensus = cert.chain.consensus ?? null;
   const reasons: string[] = [];
   if (!integrity.fingerprintMatches) reasons.push('fingerprint does not match the stored run + evidence');
   if (!integrity.metadataMatches) reasons.push('certificate metadata does not match the signed run + evidence');
   if (!integrity.signatureValid) reasons.push('sr25519 signature is invalid');
   if (!integrity.addressMatchesKey) reasons.push('signer address does not match the public key');
+  if (consensus?.incomplete) {
+    reasons.push('consensus context incomplete: BABE authorship / GRANDPA finality context was not fully established');
+  }
   const integrityOk =
     integrity.fingerprintMatches &&
     integrity.signatureValid &&
@@ -108,5 +115,5 @@ export async function verifyCertificate(
   reasons.push(`chain: ${chain.reason}`);
   if (cert.signature.dev) reasons.push('DEV KEY: signed with a public test key — proves integrity, not operator identity');
   const status: ChainCheckStatus = !integrityOk || chain.status === 'mismatch' ? 'mismatch' : chain.status;
-  return { status, reasons, integrity, chain, devKey: cert.signature.dev };
+  return { status, reasons, integrity, chain, devKey: cert.signature.dev, consensus };
 }
