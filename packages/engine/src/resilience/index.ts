@@ -39,6 +39,7 @@ export {
   classifyFinalityObservations,
   decodeBabePreDigest,
   epochTransitionsFrom,
+  stripCompactLengthPrefix,
 } from './consensus';
 export type {
   AttributeBabeInput,

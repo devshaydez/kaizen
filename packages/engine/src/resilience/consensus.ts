@@ -26,6 +26,9 @@ import { KaizenError } from '../errors';
 /** Version of the BABE authorship attribution record. */
 export const BABE_AUTHORSHIP_VERSION = 2 as const;
 
+/** Version of the BABE pre-digest payload handling (length-prefix aware). */
+export const BABE_PRE_DIGEST_LAYOUT_VERSION = 2 as const;
+
 /** Version of the GRANDPA finality observation record. */
 export const GRANDPA_FINALITY_VERSION = 2 as const;
 
@@ -52,9 +55,46 @@ const PRE_DIGEST_KINDS: Record<number, BabePreDigestKind> = {
 };
 
 /**
+ * Strip a SCALE compact length prefix when it is exactly the remaining
+ * payload length.
+ *
+ * `DigestItem::PreRuntime` stores its payload as a `Vec<u8>`, and the
+ * @polkadot/types `Bytes` codec returned for that field exposes the Vec
+ * encoding (prefix included) from `toU8a()`. The pre-digest itself never
+ * starts with a valid compact length that equals the remaining bytes, so this
+ * is unambiguous: a prefix is removed only when its decoded length matches.
+ * Bare payloads (other API versions, hand-built fixtures) pass through.
+ */
+export function stripCompactLengthPrefix(bytes: Uint8Array): Uint8Array {
+  if (bytes.length === 0) return bytes;
+  const first = bytes[0]!;
+  const mode = first & 0b11;
+  let prefix: number;
+  let length: number;
+  if (mode === 0) {
+    prefix = 1;
+    length = first >> 2;
+  } else if (mode === 1) {
+    if (bytes.length < 2) return bytes;
+    prefix = 2;
+    length = (first >> 2) | (bytes[1]! << 6);
+  } else if (mode === 2) {
+    if (bytes.length < 4) return bytes;
+    prefix = 4;
+    length = (first >> 2) | (bytes[1]! << 6) | (bytes[2]! << 14) | (bytes[3]! << 22);
+  } else {
+    // Big-integer mode: not used for a BABE pre-digest; leave it alone.
+    return bytes;
+  }
+  return length === bytes.length - prefix ? bytes.subarray(prefix) : bytes;
+}
+
+/**
  * Decode the SCALE-encoded BABE pre-runtime digest.
  * Layout: variant byte, authority_index (u32 LE), slot (u64 LE), then the
  * VRF signature for primary/secondary-VRF variants.
+ * The input must be the bare payload (`stripCompactLengthPrefix` first when
+ * the source includes the SCALE Vec length).
  */
 export function decodeBabePreDigest(data: Uint8Array | string): BabePreDigest {
   const bytes = typeof data === 'string' ? Uint8Array.from(Buffer.from(strip0x(data), 'hex')) : data;

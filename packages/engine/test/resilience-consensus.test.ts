@@ -16,6 +16,7 @@ import {
   classifyFinalityGap,
   classifyFinalityObservations,
   decodeBabePreDigest,
+  stripCompactLengthPrefix,
   type BabeAuthority,
   type BabeAuthoritySet,
   type BabeAuthorship,
@@ -74,6 +75,30 @@ describe('decodeBabePreDigest', () => {
     expect(() => decodeBabePreDigest(preDigest(0, 0, 1))).toThrow(/unknown BABE pre-digest variant/);
     expect(() => decodeBabePreDigest(new Uint8Array(4))).toThrow(/at least 13/);
     expect(() => decodeBabePreDigest(preDigest(1, 0, 1, false))).toThrow(/missing its VRF signature/);
+  });
+
+  it('strips the SCALE Vec length that @polkadot/types includes in pre-runtime data', () => {
+    // Real log seen on portaldot_dev (2026-11-04): 13-byte SecondaryPlain
+    // payload behind compact length 0x34 (13 << 2).
+    const log = '0x0642414245340201000000b8f0d11100000000';
+    const data = Uint8Array.from(Buffer.from(log.slice(12), 'hex'));
+    expect(data.length).toBe(14);
+    const bare = stripCompactLengthPrefix(data);
+    expect(bare.length).toBe(13);
+    expect(decodeBabePreDigest(bare)).toEqual({
+      kind: 'secondary-plain',
+      authorityIndex: 1,
+      slot: 0x11d1f0b8,
+    });
+  });
+
+  it('leaves bare payloads and mismatched lengths untouched', () => {
+    const bare = preDigest(2, 0, 7, false);
+    expect(stripCompactLengthPrefix(bare)).toEqual(bare);
+    // 0x08 declares 2 bytes, which is not the remaining 13 → not a prefix.
+    const mismatched = Uint8Array.from([0x08, ...bare]);
+    expect(stripCompactLengthPrefix(mismatched)).toEqual(mismatched);
+    expect(() => decodeBabePreDigest(mismatched)).toThrow(/unknown BABE pre-digest variant 8/);
   });
 });
 

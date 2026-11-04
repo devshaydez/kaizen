@@ -17,6 +17,7 @@ import { decodeAddress } from '@polkadot/util-crypto';
 import { KaizenError } from '../errors';
 import {
   decodeBabePreDigest,
+  stripCompactLengthPrefix,
   type BabeEpochContext,
   type BabePreDigest,
 } from './consensus';
@@ -313,7 +314,10 @@ class PolkadotView implements ConsensusRuntimeView {
       const c = codec(data);
       if (!c || typeof c.toU8a !== 'function') return null;
       try {
-        return decodeBabePreDigest(c.toU8a());
+        // @polkadot/types exposes the Vec<u8> encoding (compact length
+        // included) for PreRuntime data, so strip the verified prefix before
+        // decoding the pre-digest (found by the live drill on 2026-11-04).
+        return decodeBabePreDigest(stripCompactLengthPrefix(c.toU8a()));
       } catch {
         return null;
       }
