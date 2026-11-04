@@ -17,7 +17,7 @@ on:
       - 'test/integration/resilience.int.test.ts'
       - '.github/workflows/resilience-live.yml'
   push:
-    branches: [main, feat/proof-of-resilience, feat/portaldot-evidence-upgrade]
+    branches: [main, feat/proof-of-resilience]
     paths:
       - 'packages/engine/src/resilience/**'
       - 'packages/engine/src/engine.ts'
@@ -29,6 +29,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: resilience-live-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   live:
