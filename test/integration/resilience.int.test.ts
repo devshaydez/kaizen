@@ -15,6 +15,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { ApiPromise, HttpProvider } from '@polkadot/api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   PolkadotConsensusRuntime,
@@ -147,6 +148,41 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       const confidentlyAttributed = ev!.consensus!.authorings.filter(
         (a) => a.outcome === 'authored' && a.validatorId !== null,
       );
+      if (confidentlyAttributed.length === 0) {
+        const api = await ApiPromise.create({
+          provider: new HttpProvider(`http://127.0.0.1:${observerPort}`),
+          noInitWarn: true,
+          throwOnConnect: true,
+        });
+        try {
+          const session = api.query['session'] as unknown as Record<string, (...args: unknown[]) => Promise<unknown>>;
+          const call = async (args: unknown[]): Promise<unknown> => {
+            try {
+              const v = (await session['keyOwner']!(...args)) as { toJSON?: () => unknown; toString: () => string };
+              return v.toJSON ? v.toJSON() : v.toString();
+            } catch (e) {
+              return `error: ${e instanceof Error ? e.message : String(e)}`;
+            }
+          };
+          const observed = ev!.consensus!.authorings.at(-1)!.authorityKey!;
+          console.log(
+            'KEYOWNER DIAG',
+            JSON.stringify(
+              {
+                observed,
+                keys: Object.keys(session).filter((k) => k.toLowerCase().includes('key')).sort(),
+                twoArgHex: await call(['0x62616265', observed]),
+                twoArgText: await call(['babe', observed]),
+                oneArg: await call([observed]),
+              },
+              null,
+              2,
+            ),
+          );
+        } finally {
+          await api.disconnect();
+        }
+      }
       expect(confidentlyAttributed.length, `confidently attributed blocks (${incomplete})`).toBeGreaterThan(0);
 
       const attributed = await discovery.attribute(snapshot.at);
