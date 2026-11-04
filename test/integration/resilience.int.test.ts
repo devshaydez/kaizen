@@ -59,15 +59,23 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       async () => Number.parseInt((await httpRpc<{ number: string }>(observerPort, 'chain_getHeader', [await httpRpc<string>(observerPort, 'chain_getFinalizedHead')])).number, 16) >= 2,
       { timeoutMs: 120_000, label: 'finalized >= 2' },
     );
-  }, 300_000);
+    // Binary download + two-node boot can exceed five minutes on a cold
+    // runner; a timeout here must not be confused with a drill failure.
+  }, 600_000);
 
   afterAll(async () => {
     try {
+      if (!engine) {
+        if (dir) fs.rmSync(dir, { recursive: true, force: true });
+        return;
+      }
       for (const n of engine.networks.list()) if (n.status === 'running' || n.status === 'starting') await engine.networks.stop(n.id);
     } finally {
-      await engine.processes.killAll();
-      await engine.close();
-      fs.rmSync(dir, { recursive: true, force: true });
+      if (engine) {
+        await engine.processes.killAll();
+        await engine.close();
+      }
+      if (dir) fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 
