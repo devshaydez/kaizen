@@ -80,6 +80,20 @@ export interface V3ChainSession {
     success: boolean;
     events: string[];
   } | null>;
+  /**
+   * Read a past extrinsic (by hash) from a block: success, events and EVM
+   * logs. Optional so scripted sessions written before T-9.7D still satisfy
+   * the interface; its absence is reported as "receipt not checked".
+   */
+  extrinsicAt?(blockHash: string, txHash: string): Promise<{
+    signer: string;
+    blockNumber: number;
+    success: boolean;
+    events: string[];
+    logs: RegistryLog[];
+    remarkHash: string | null;
+    instantiated: string | null;
+  } | null>;
   /** Text of a `system.remark*` extrinsic at (block, index); null when absent. */
   remarkAt(blockHash: string, extrinsicIndex: number): Promise<string | null>;
   /** Read-only contract call (runtime-API dry run); returns return data hex. */
@@ -312,12 +326,14 @@ class PolkadotV3ChainSession implements V3ChainSession {
     return this.submit(tx, signer, opts, 'revive.call');
   }
 
-  async deploymentAt(blockHash: string, txHash: string): Promise<{
-    contract: string | null;
+  async extrinsicAt(blockHash: string, txHash: string): Promise<{
     signer: string;
     blockNumber: number;
     success: boolean;
     events: string[];
+    logs: RegistryLog[];
+    remarkHash: string | null;
+    instantiated: string | null;
   } | null> {
     const signed = await this.api.rpc.chain.getBlock(blockHash);
     const idx = signed.block.extrinsics.findIndex((e) => e.hash.toHex() === txHash);
@@ -330,11 +346,31 @@ class PolkadotV3ChainSession implements V3ChainSession {
     const mine = all.filter((e) => e.phase.isApplyExtrinsic && e.phase.asApplyExtrinsic.toNumber() === idx);
     const extracted = this.extract(mine);
     return {
-      contract: extracted.instantiated,
       signer: ext.signer.toString(),
       blockNumber: signed.block.header.number.toNumber(),
       success: extracted.events.includes('system.ExtrinsicSuccess'),
       events: extracted.events,
+      logs: extracted.logs,
+      remarkHash: extracted.remarkHash,
+      instantiated: extracted.instantiated,
+    };
+  }
+
+  async deploymentAt(blockHash: string, txHash: string): Promise<{
+    contract: string | null;
+    signer: string;
+    blockNumber: number;
+    success: boolean;
+    events: string[];
+  } | null> {
+    const found = await this.extrinsicAt(blockHash, txHash);
+    if (!found) return null;
+    return {
+      contract: found.instantiated,
+      signer: found.signer,
+      blockNumber: found.blockNumber,
+      success: found.success,
+      events: found.events,
     };
   }
 

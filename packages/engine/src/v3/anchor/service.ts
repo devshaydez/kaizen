@@ -492,6 +492,12 @@ export class V3AnchorService {
       onChainAnchoredAt: null,
       contractCodePresent: null,
       blockHashMatches: null,
+      evmChainId: null,
+      chainIdMatches: null,
+      contractAddressMatches: null,
+      txHashMatches: null,
+      txSucceeded: null,
+      onChainRecordMatches: null,
       verdict: 'unverifiable',
       notes,
       at: this.iso(),
@@ -517,24 +523,100 @@ export class V3AnchorService {
         notes.push('connected chain genesis differs from the anchor\'s chain');
         chainOk = false;
       }
+
+      // EVM chain identity: a matching block hash on a different EVM chain is
+      // not the chain the anchor claims.
+      result.evmChainId = await this.evmChainId(notes);
+      if (result.evmChainId === null) {
+        notes.push('EVM chain id could not be read: chain identity is only partially checked');
+      } else {
+        result.chainIdMatches = result.evmChainId === this.config().expectedEvmChainId;
+        if (!result.chainIdMatches) {
+          notes.push(
+            `EVM chain id ${result.evmChainId} does not match the configured expected chain id ${this.config().expectedEvmChainId}`,
+          );
+          chainOk = false;
+        }
+      }
+
       if (anchor.blockNumber !== null && anchor.blockHash) {
         const at = await session.blockHashAt(anchor.blockNumber);
         result.blockHashMatches = at === anchor.blockHash;
         if (!result.blockHashMatches) chainOk = false;
       }
-      if (anchor.method === 'contract' && anchor.contractAddress) {
-        const data = await session.readContract(anchor.signerAddress, anchor.contractAddress, encodeAnchoredAtCall(anchor.runHash));
-        const ts = Number(decodeUintReturn(data));
-        result.onChainAnchoredAt = ts;
-        if (ts === 0) {
-          notes.push('registry reports this run hash as NOT anchored');
+
+      if (anchor.method === 'contract') {
+        if (!anchor.contractAddress || !isH160(anchor.contractAddress)) {
+          result.contractAddressMatches = false;
+          notes.push('recorded contract address is not a 20-byte H160');
           chainOk = false;
+        } else {
+          const current = this.registryFor(info.genesisHash);
+          const recordedDeployment = this.store
+            .listV3Contracts(anchor.genesisHash ? { genesisHash: anchor.genesisHash } : {})
+            .some((c) => c.address.toLowerCase() === anchor.contractAddress!.toLowerCase());
+          result.contractAddressMatches =
+            (current?.address.toLowerCase() === anchor.contractAddress.toLowerCase()) || recordedDeployment;
+          if (!result.contractAddressMatches) {
+            notes.push(
+              'recorded contract address is neither the registry in effect nor a recorded deployment for this chain',
+            );
+            chainOk = false;
+          }
+          const data = await session.readContract(
+            anchor.signerAddress,
+            anchor.contractAddress,
+            encodeAnchoredAtCall(anchor.runHash),
+          );
+          const ts = Number(decodeUintReturn(data));
+          result.onChainAnchoredAt = ts;
+          result.onChainRecordMatches = ts > 0;
+          if (ts === 0) {
+            notes.push('registry reports this run hash as NOT anchored');
+            chainOk = false;
+          }
+          result.contractCodePresent = await this.codePresent(anchor.contractAddress, notes);
+          if (result.contractCodePresent === false) chainOk = false;
         }
-        result.contractCodePresent = await this.codePresent(anchor.contractAddress, notes);
-        if (result.contractCodePresent === false) chainOk = false;
       }
+
+      // Transaction receipt: the recorded hash must exist in the recorded
+      // block, have succeeded, and (contract method) carry a RunAnchored log
+      // for exactly this run hash.
+      if (anchor.txHash && anchor.blockHash) {
+        if (!session.extrinsicAt) {
+          notes.push('transaction receipt not checked: this chain session does not expose extrinsicAt');
+        } else {
+          const found = await session.extrinsicAt(anchor.blockHash, anchor.txHash);
+          result.txHashMatches = found !== null;
+          if (!found) {
+            notes.push('recorded transaction was not found in the recorded block');
+            chainOk = false;
+          } else {
+            result.txSucceeded = found.success;
+            if (!found.success) {
+              notes.push('recorded transaction did not report system.ExtrinsicSuccess');
+              chainOk = false;
+            }
+            if (anchor.method === 'contract' && anchor.contractAddress && found.logs.length > 0) {
+              const matching = found.logs.some((log) => {
+                if (log.contract !== anchor.contractAddress!.toLowerCase()) return false;
+                const decoded = decodeRunAnchoredLog(log);
+                return decoded !== null && decoded.runHash === anchor.runHash;
+              });
+              result.onChainRecordMatches = (result.onChainRecordMatches !== false) && matching;
+              if (!matching) {
+                notes.push('transaction logs do not contain RunAnchored for this run hash');
+                chainOk = false;
+              }
+            }
+          }
+        }
+      }
+
       if (anchor.method === 'remark' && anchor.blockHash && anchor.extrinsicIndex !== null) {
         const text = await session.remarkAt(anchor.blockHash, anchor.extrinsicIndex);
+        result.onChainRecordMatches = text === anchor.payload;
         if (text !== anchor.payload) {
           notes.push('remark text in the block does not match the recorded payload');
           chainOk = false;
@@ -549,6 +631,33 @@ export class V3AnchorService {
     }
     result.verdict = result.hashMatches && chainOk ? 'verified' : 'mismatch';
     return result;
+  }
+
+  /** EVM `eth_chainId`; null (with a note) when the RPC cannot answer. */
+  private async evmChainId(notes: string[]): Promise<number | null> {
+    try {
+      const res = await this.evmRpc.post({
+        url: this.config().evmRpcUrl,
+        method: 'eth_chainId',
+        params: [],
+        timeoutMs: 15_000,
+        id: 1,
+      });
+      const json = res.json as { result?: unknown } | null;
+      if (res.httpStatus !== 200 || typeof json?.result !== 'string') {
+        notes.push('EVM RPC eth_chainId gave no usable result');
+        return null;
+      }
+      const id = Number.parseInt(json.result, 16);
+      if (!Number.isSafeInteger(id)) {
+        notes.push('EVM RPC eth_chainId returned a malformed value');
+        return null;
+      }
+      return id;
+    } catch (e) {
+      notes.push(`EVM RPC eth_chainId failed: ${redactSecrets(e instanceof Error ? e.message : String(e))}`);
+      return null;
+    }
   }
 
   private async codePresent(address: string, notes: string[]): Promise<boolean | null> {

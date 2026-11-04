@@ -1,3 +1,13 @@
+## 2026-11-04 — T-9.7D: contract evaluation and anchoring verification
+
+**Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `packages/engine/src/v3/anchor/chain.ts`, `service.ts`, `types.ts`, `packages/engine/test/v3-anchor.test.ts`, `docs/PORTALDOT_INTEGRATION.md` (new), `README.md`, `docs/DECISIONS.md`, `docs/PHASE_REPORT.md`.
+**Work done**: `V3AnchorService.verify` now checks the EVM chain id, registry address provenance (H160 + current/recorded deployment), the transaction receipt (found in the recorded block, `system.ExtrinsicSuccess`), and the on-chain record (`anchoredAt(runHash) > 0`, matching `RunAnchored` log when logs are available, exact remark payload). Added optional `V3ChainSession.extrinsicAt` and refactored `deploymentAt` onto it. New `docs/PORTALDOT_INTEGRATION.md` documents BABE/GRANDPA methodology, session/authority handling, runtime queries and failure behaviour, contract comparison, measured vs estimated anchoring economics, batching options, and limitations. Corrected README and added a DEC-031 addendum: the repository contains no ink! source/artifact/deployment, so the previously quoted ink! deposits are unverified; the deployed path is Solidity/EVM on pallet-revive. No deployment, transaction, or interface change.
+**Verification**: `npx vitest run --config vitest.config.mts packages/engine/test/v3-anchor.test.ts` → **27/27 passed** (new receipt/address/record/chain-id cases). `npx tsc -p packages/engine --noEmit` → clean. Live re-verification of the new checks not run in this sandbox.
+**Problems / decisions**: Retain revive/EVM; do not migrate to ink!. Batching/aggregation is PLANNED, not implemented. Certificate-fingerprint remark verification remains a demo-script concern, not an engine API.
+**Next step**: Phase E — CI reproducibility, documentation sync, full verification, diff review.
+
+---
+
 ## 2026-11-04 — T-9.7C: evidence, certificate and score integrity
 
 **Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `packages/engine/src/resilience/integrity.ts` (new), `certificate.ts`, `verify.ts`, `score.ts`, `service.ts`, `index.ts`, `packages/engine/test/resilience-integrity.test.ts` (new), `resilience-certificate.test.ts`, `resilience-verify.test.ts`, `resilience-score.test.ts`, `resilience-service.test.ts`, `packages/cli/src/program.ts`, `docs/RESILIENCE_SCORE.md`, `docs/PHASE_REPORT.md`.

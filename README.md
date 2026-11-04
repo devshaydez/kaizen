@@ -39,13 +39,17 @@ The drill-live workflow runs real resilience drills in CI every three hours. It 
 
 An anchor or drill is reported only when its corresponding operation and evidence support that claim. See [the architecture](docs/ARCHITECTURE.md), [the technical research record](docs/TECHNICAL_RESEARCH.md), and [the testing evidence](docs/TESTING.md) for scope and verification boundaries.
 
-## Contract platform choice: ink! via pallet-contracts, with a documented revive path
+## Contract platform: revive/EVM (deployed), ink! evaluated and not adopted
 
-The resilience registry is a 6.8 KB ink! contract deployed through pallet-contracts on Portaldot V3. This was a deliberate evaluation, not a default: the ink! path is native to the Substrate toolchain the engine already operates (BABE/GRANDPA evidence decoding, on-chain anchoring), registry upload plus instance deposit is approximately 548 tPOT, and each certificate anchor costs approximately 1.4 tPOT, versus approximately 7.7 tPOT for the equivalent EVM-side registry. The official ink! documentation has stated it will no longer be actively maintained or developed from January 2026; this is factored in, and because the registry is isolated behind the engine's `V3AnchorService`, a future port to revive/PolkaVM is a bounded change to that service boundary rather than an engine rewrite. Deposit levels on V3 are expected to continue being adjusted, so the cost model reads actual chain deposits at runtime instead of hardcoding them.
+The run registry deployed on Portaldot V3 (`KaizenRunRegistry`) is Solidity compiled to EVM bytecode and executed by pallet-revive. That is the path the engine's anchoring, dry-run, receipt and verification code exercises, and it is the path with recorded live transactions. `KaizenResilienceRegistry.sol` is implemented, reproducible and tested in memory, but it is **not deployed** (the deployer held ≈3.15 tPOT against an ≈85 tPOT registry deploy, RSK-30).
+
+No ink! contract is present in this repository. The official ink! documentation states that active maintenance ended in January 2026, and there is no working ink! deployment here to preserve; migrating would add a new artifact, codec, dry-run path and deployment without a measured benefit. The registry is isolated behind `V3AnchorService`, so a future move to pallet-contracts remains a bounded change if Portaldot requires it. Deposit levels on V3 change over time, so costs are read from live chain state rather than hardcoded.
+
+The full evidence-based comparison, measured versus estimated costs, batching options, and known limitations are in [Portaldot integration](docs/PORTALDOT_INTEGRATION.md).
 
 ### Monitoring surface
 
-Read-only monitoring polls the public V3 WS endpoint at roughly one request per block and reads validator identity from on-chain state: `session.validators` (current validators), `session.queuedKeys` / `session.nextKeys` (next session keys), `session.currentIndex`, `babe.authorities`, and `grandpa.authorities`. No official validator list is published, so on-chain state is the source of truth. See [Technical research](docs/TECHNICAL_RESEARCH.md), R-25.
+Read-only monitoring reads validator identity and consensus context from on-chain state at an explicit block: `session.validators`, `session.queuedKeys`, `session.nextKeys`, `session.currentIndex`, `babe.authorities`, `grandpa.authorities`, plus epoch and staking-era context. Discovery is cached per block, so a monitor reads at most one snapshot per block; it never writes. No official validator list is published, so on-chain state is the source of truth. The reads are implemented with offline tests; the live-node assertions run only in the x86_64 resilience workflow and have not been executed in every environment. See [Portaldot integration](docs/PORTALDOT_INTEGRATION.md) and [Technical research](docs/TECHNICAL_RESEARCH.md), R-25.
 
 ## Roadmap
 
@@ -54,6 +58,7 @@ The implementation plan and progress log describe the current state and remainin
 ## Documentation
 
 - [Project specification](docs/PROJECT_SPEC.md)
+- [Portaldot integration: consensus, evidence, contracts](docs/PORTALDOT_INTEGRATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Technical research](docs/TECHNICAL_RESEARCH.md)

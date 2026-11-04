@@ -222,6 +222,48 @@ observed; a phase is not "verified" because code exists.
 
 ---
 
+## Phase D — Contract evaluation and anchoring verification (2026-11-04)
+
+### Implemented (read-only)
+
+- `V3AnchorService.verify` now also checks and reports the EVM chain id
+  (`eth_chainId` vs the configured expected id), registry address provenance
+  (H160 + current/recorded deployment), the transaction receipt (exists in
+  the recorded block, `system.ExtrinsicSuccess`), and the on-chain record
+  (`anchoredAt(runHash) > 0`, matching `RunAnchored` log when logs are
+  available, exact remark payload). A failed/missing transaction, wrong chain
+  id, unknown registry, missing record or fork makes the verdict `mismatch`;
+  an unreadable endpoint stays `unverifiable`.
+- `V3ChainSession.extrinsicAt` exposes a past transaction's signer, success,
+  events, logs and remark hash; `deploymentAt` now uses it. The method is
+  optional in the interface so older scripted sessions still type-check and
+  the check is reported as "receipt not checked" rather than crashing.
+- New `docs/PORTALDOT_INTEGRATION.md` documents the BABE/GRANDPA methodology,
+  session/authority handling, runtime query behaviour, contract comparison,
+  measured vs estimated anchoring costs, batching options, and limitations.
+- README and DEC-031 corrected: the deployed path is Solidity/EVM on
+  pallet-revive; no ink! artifact or deployment exists in the repository, so
+  the previously quoted ink! deposit figures are recorded as unverified.
+
+### Tests and results (actual)
+
+- `npx vitest run --config vitest.config.mts packages/engine/test/v3-anchor.test.ts`
+  → **27 passed** (new: successful receipt/address/record fields, failed
+  receipt, missing transaction, EVM chain-id mismatch).
+- `npx tsc -p packages/engine --noEmit` → clean.
+- No deployment, no transaction, no interface change. Live re-verification
+  of the new checks was not run in this sandbox.
+
+### Decision recorded
+
+Retain revive/EVM; do not migrate to ink!. There is no working ink!
+implementation to preserve, the deployed and verified path is revive/EVM,
+and ink! maintenance ended in January 2026. Migration remains a bounded
+change behind `V3AnchorService` if Portaldot requires it. Batching is
+**PLANNED**, not implemented.
+
+---
+
 ## Previous report (Phase 9, T-3.6C and T-9.1–T-9.5)
 
 # Phase 9 and Console Status Report: T-3.6C and T-9.1 to T-9.5

@@ -82,6 +82,22 @@ export interface V3AnchorVerification {
   contractCodePresent: boolean | null;
   /** Block hash re-read from the chain at the recorded block number. */
   blockHashMatches: boolean | null;
+  /** EVM chain id read from the configured EVM RPC (null when unreadable). */
+  evmChainId: number | null;
+  /** `evmChainId` equals the configured expected chain id. */
+  chainIdMatches: boolean | null;
+  /** Recorded contract address is a valid H160 and has recorded provenance. */
+  contractAddressMatches: boolean | null;
+  /** The recorded transaction hash exists in the recorded block. */
+  txHashMatches: boolean | null;
+  /** The recorded transaction reported `system.ExtrinsicSuccess`. */
+  txSucceeded: boolean | null;
+  /**
+   * The on-chain record names this run hash: `anchoredAt(runHash) > 0` for the
+   * contract method (or the matching `RunAnchored` log), or the exact remark
+   * payload for the remark method.
+   */
+  onChainRecordMatches: boolean | null;
   verdict: 'verified' | 'mismatch' | 'unverifiable';
   notes: string[];
   at: string;
