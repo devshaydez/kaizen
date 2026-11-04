@@ -1,3 +1,112 @@
+# Portaldot Evidence Upgrade — Phase Report
+
+**Branch**: `feat/portaldot-evidence-upgrade`. **Started**: 2026-11-04.
+**Scope**: T-9.7 (consensus-aware evidence, validator discovery, evidence and
+score integrity, contract/anchoring evaluation, reproducible CI). This report
+is updated after each phase. Claims below are limited to what was run and
+observed; a phase is not "verified" because code exists.
+
+---
+
+## Phase A — Audit and architecture (2026-11-04)
+
+### A.1 What already worked (preserved)
+
+| Area | State found | Evidence |
+|---|---|---|
+| Chain-bound evidence | `ChainEvidenceRecorder` reads best/finalized heads from an observer node that is not the fault target, records gaps instead of filling them, and derives recovery from finality advancing past the pre/during-fault maximum. | `packages/engine/src/resilience/evidence.ts`; 11 offline tests in `resilience-evidence.test.ts`; live drill in `test/integration/resilience.int.test.ts` |
+| Certificates | Canonical document (`kaizenCertificate`, run hash, run, chain) → SHA-256 fingerprint; sr25519 signature; dev keys labelled; verification recomputes the fingerprint and re-fetches every observed block hash by number. | `certificate.ts`, `verify.ts`; 12 + 6 offline tests; `resilience-live.yml` |
+| Score v1 | Deterministic, documented formula with recency decay and confidence; integrity-failing certificates excluded. | `score.ts`, `docs/RESILIENCE_SCORE.md`; 12 offline tests |
+| V3 run anchoring | EVM registry (`KaizenRunRegistry`) via pallet-revive and `system.remarkWithEvent`; submission gated, explicit, dry-run before spending fees; receipts/events required before an anchor is called anchored. | `packages/engine/src/v3/anchor/*`; `v3-anchor.test.ts`; recorded live anchors (T-8.2) |
+| Read-only RPC reader | `chain_getHeader` / `chain_getFinalizedHead` / `chain_getBlockHash` over HTTP with timeouts and a typed unreachable error. | `resilience/rpc.ts` |
+
+### A.2 Gaps found (the work this upgrade targets)
+
+1. **Consensus evidence was documented, not implemented.**
+   `README.md` ("Monitoring surface") and `docs/TECHNICAL_RESEARCH.md` R-25
+   state that the engine reads `session.validators`, `babe.authorities`, and
+   `grandpa.authorities` through its RPC layer. No code in
+   `packages/engine/src/resilience` performed any of those reads. R-25 is
+   therefore downgraded to **UNVERIFIED** in this upgrade (the polling stance
+   remains mentor guidance, not a Kaizen measurement).
+
+2. **Uncommitted consensus groundwork was defective.** A pre-existing
+   uncommitted `consensus.ts` + recorder wiring was audited before reuse:
+   - `attributeBabeSlot` derived authorship from an invented `period`
+     round-robin (`slot / period % authorities.length`). That is not a BABE
+     rule. BABE carries the `authority_index` in the pre-runtime digest, and
+     secondary slots use `blake2_256(epoch_randomness ++ slot) % authorities_len`
+     (Substrate `sc-consensus-babe` documentation). The implemented rule could
+     silently attribute a block to the wrong validator — the exact failure the
+     feedback asks to prevent.
+   - `finalityDuringSetTransition` returned true when a transition occurred
+     *at or after* the observation block, which has no relationship to
+     explaining a finality gap.
+   - Transition detection never seeded the first observed `setId`, so the
+     second observation always looked like a transition.
+   - `buildConsensusEvidence` collapsed "no source configured", "read failed",
+     and "no data" into one boolean without reasons.
+
+3. **No validator discovery.** Nothing queried `session.validators`,
+   `session.queuedKeys`, `session.nextKeys`, `session.currentIndex`,
+   `babe.authorities`, or `grandpa.authorities`; validators were only known
+   from process records.
+
+4. **No evidence-integrity recomputation.** Verification compared block hashes
+   and the certificate fingerprint but never recomputed `metrics`, never
+   checked observation ordering against fault timestamps, and never classified
+   a drill as passed/failed/inconclusive. A certificate with
+   `consensus.incomplete = true` still reported `status: verified`; the only
+   signal was a free-text reason.
+
+5. **Score v1 conflated missing with bad.** `inverse(null) = 0` meant a
+   drill whose metric could not be derived scored identically to a
+   catastrophic measurement. Era/authority transitions, evidence volume
+   coverage, and incomplete certificates were not inputs.
+
+6. **Anchoring verification stopped short.** `V3AnchorService.verify` checked
+   genesis, block hash, `anchoredAt`, and `eth_getCode`; it did not check the
+   EVM chain id, did not confirm the recorded transaction succeeded, and did
+   not validate the registry address provenance.
+
+7. **Documentation overclaimed the contract.** `README.md` and DEC-031 state
+   that a 6.8 KB ink! registry is deployed on Portaldot V3 and quote deposit
+   costs. The repository contains only Solidity/revive artifacts
+   (`contracts/*.sol`, `KaizenResilienceRegistry` remains undeployed per
+   RSK-30); no ink! source, build artifact, or deployment record exists here.
+   Phase D records this honestly and does not migrate anything.
+
+### A.3 Plan
+
+- **Phase B** — replace the defective attribution with digest-based
+  authorship; add epoch/session/authority-set context, GRANDPA `setId`
+  tracking with a bounded transition window, and read-only validator discovery
+  over an injectable runtime facade (real `@polkadot/api` implementation;
+  offline fake for tests), cached per block to keep the read rate at roughly
+  one snapshot per block.
+- **Phase C** — evidence integrity (metric recomputation, timestamp
+  consistency, completeness reasons), drill outcome classification
+  (passed/failed/inconclusive), certificate evidence hash, verification
+  outcome propagation, and score v2 eligibility/coverage rules.
+- **Phase D** — documented, evidence-based contract comparison (revive vs
+  ink!) and anchoring economics; read-only verification hardening (EVM chain
+  id, transaction receipt, registry address, on-chain record match). No
+  deployment or migration.
+- **Phase E** — CI drill assertions/artifacts, README reproduction path,
+  documentation sync, full test/build/typecheck/lint run, diff review, PR.
+
+### A.4 Constraints recorded
+
+- The local sandbox is arm64 and has no `portaldot_dev` binary, so live-node
+  verification cannot run here. Live suites remain gated by
+  `KAIZEN_TEST_LIVE=1` and are exercised on x86_64 CI. Unit tests use
+  scripted fakes only and are never described as network tests.
+- No mainnet access, no contract deployment, no fund spending, no migration.
+
+---
+
+## Previous report (Phase 9, T-3.6C and T-9.1–T-9.5)
+
 # Phase 9 and Console Status Report: T-3.6C and T-9.1 to T-9.5
 
 **Revision date**: 2026-10-30. **Status**: T-3.6C and T-9.1 through T-9.5 are implemented as described below. Implementation status is distinct from the strength of evidence; no full live-browser verification is claimed. The previous report is preserved verbatim as `docs/PHASE_REPORT_v1.md`.
@@ -21,7 +130,7 @@
 
 ## Hardening and explicitly planned work
 
-`apps/api/src/server.ts` binds to `127.0.0.1` by default. The localhost API is unauthenticated by design and is loopback-only; do not expose it remotely as-is. Before any remote deployment, implement and verify Host/Origin validation and WebSocket cross-origin protection, together with an appropriate authentication boundary. These controls are PLANNED, not present verification.
+`apps/api/src/server.ts` binds to `127.0.0.1` by default. The localhost API is unauthenticated by design and loopback-only; do not expose it remotely as-is. Before any remote deployment, implement and verify Host/Origin validation and WebSocket cross-origin protection, together with an appropriate authentication boundary. These controls are PLANNED, not present verification.
 
 The IncidentMonitor and Docker/Kubernetes/Helm adapters remain PLANNED. `KaizenResilienceRegistry.sol` remains undeployed until its duplicate-fingerprint submission design is resolved. The more advanced resilience trust model described above also remains PLANNED.
 
