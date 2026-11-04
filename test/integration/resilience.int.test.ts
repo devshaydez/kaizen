@@ -20,6 +20,7 @@ import {
   PolkadotConsensusRuntime,
   ValidatorDiscovery,
   createEngine,
+  decodeBabePreDigest,
   type KaizenEngine,
   type ScenarioInput,
 } from '@kaizen/engine';
@@ -114,11 +115,49 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
     // asserts real reads against the running network: session validators,
     // BABE authorities, GRANDPA authorities, and one attributed block.
     expect(ev!.consensus, 'consensus capture was wired for the drill').not.toBeNull();
-    expect(ev!.consensus!.authorings.length, 'BABE authorship observations').toBeGreaterThan(0);
-    expect(ev!.consensus!.authoritySets.length, 'authority sets used for attribution').toBeGreaterThan(0);
     const discovery = new ValidatorDiscovery({
       runtime: new PolkadotConsensusRuntime({ rpcUrl: `http://127.0.0.1:${observerPort}` }),
     });
+    // Diagnostic that runs only while evidence is incomplete: it shows which
+    // reads failed and what the raw pre-runtime digest looks like, so a red
+    // live job names the cause instead of just "zero authorings".
+    if (ev!.consensus!.authorings.length === 0) {
+      const last = ev!.observations.at(-1)!;
+      const header = await httpRpc<{ digest?: { logs?: string[] } }>(observerPort, 'chain_getHeader', [last.best.hash]).catch((e) => ({
+        digest: { logs: [`header read failed: ${e instanceof Error ? e.message : String(e)}`] },
+      }));
+      const logs = header.digest?.logs ?? [];
+      const pre = logs.find((l) => l.toLowerCase().startsWith('0x0642414245'));
+      let decoded: unknown = null;
+      if (pre) {
+        const data = pre.slice(10);
+        for (const candidate of [data, data.slice(2)]) {
+          try {
+            decoded = decodeBabePreDigest(candidate);
+            break;
+          } catch (e) {
+            decoded = { error: e instanceof Error ? e.message : String(e) };
+          }
+        }
+      }
+      const snap = await discovery.snapshot().catch((e) => ({ unavailable: [`snapshot failed: ${String(e)}`] }));
+      console.log(
+        'CONSENSUS DIAG',
+        JSON.stringify(
+          {
+            reasons: ev!.consensus!.incompleteReasons,
+            unavailable: (snap as { unavailable?: string[] }).unavailable,
+            headerLogs: logs,
+            preRuntimeLog: pre ?? null,
+            decoded,
+          },
+          null,
+          2,
+        ),
+      );
+    }
+    expect(ev!.consensus!.authorings.length, 'BABE authorship observations').toBeGreaterThan(0);
+    expect(ev!.consensus!.authoritySets.length, 'authority sets used for attribution').toBeGreaterThan(0);
     try {
       const snapshot = await discovery.snapshot();
       expect(snapshot.validators.length, 'session.validators / session.queuedKeys').toBeGreaterThan(0);
