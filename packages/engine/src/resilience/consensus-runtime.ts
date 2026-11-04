@@ -388,6 +388,12 @@ class PolkadotView implements ConsensusRuntimeView {
     return out;
   }
 
+  async keyOwner(key: string): Promise<string | null> {
+    if (!/^0x[0-9a-fA-F]{64}$/.test(key)) return null;
+    const value = await this.call<unknown>('session', 'keyOwner', [key]);
+    return accountIdOf(value);
+  }
+
   async sessionNextKeys(): Promise<Array<{ accountId: string; keys: SessionKeySet }> | null> {
     const group = queryGroup(this.at, 'session');
     const nextKeys = group?.['nextKeys'] as QueryMap[string] | undefined;

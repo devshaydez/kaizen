@@ -98,6 +98,12 @@ export interface ConsensusRuntimeView {
   sessionValidators(): Promise<string[] | null>;
   sessionQueuedKeys(): Promise<Array<{ accountId: string; keys: SessionKeySet }> | null>;
   sessionNextKeys(): Promise<Array<{ accountId: string; keys: SessionKeySet }> | null>;
+  /**
+   * `session.keyOwner(rawKey)` → validator account. Optional: used to map an
+   * authority key to an account when `SessionKeys` has no named fields (some
+   * runtimes encode it as a tuple, so index-based guessing would be unsafe).
+   */
+  keyOwner?(key: string): Promise<string | null>;
   activeEra(): Promise<number | null>;
   eraRewardPoints(era: number): Promise<{ total: number; byValidator: Array<{ validatorId: string; points: number }> } | null>;
 }
@@ -276,6 +282,23 @@ export class ValidatorDiscovery {
       view.babeAuthorities().catch(() => null),
     ]);
     const keyMap = this.keyMap(snapshot);
+    // If the session keys are unnamed, no entry above carries a `babe` field.
+    // Resolve authority keys through the chain's own keyOwner map instead of
+    // guessing a tuple position.
+    if (authorities && authorities.length > 0 && typeof view.keyOwner === 'function') {
+      const resolve = view.keyOwner.bind(view);
+      const missing = authorities.map((a) => a.key).filter((k) => !keyMap.has(k));
+      const owners = await Promise.all(
+        missing.map(async (k) => {
+          try {
+            return [k, await resolve(k)] as const;
+          } catch {
+            return [k, null] as const;
+          }
+        }),
+      );
+      for (const [k, owner] of owners) if (owner) keyMap.set(k, owner);
+    }
     const set: BabeAuthoritySet = {
       authoritySetId: authoritySetId(epoch, authorities),
       epoch: epoch?.epoch ?? null,

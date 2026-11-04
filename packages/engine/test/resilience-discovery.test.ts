@@ -189,6 +189,24 @@ describe('ValidatorDiscovery.attribute', () => {
     expect(result!.authoritySet.authorities?.[1]?.validatorId).toBe('bob');
   });
 
+  it('resolves unnamed session keys through session.keyOwner instead of a tuple index', async () => {
+    const { rt } = runtime({
+      [hash(100)]: {
+        // portaldot_dev encodes SessionKeys as a tuple: no `babe` field.
+        sessionQueuedKeys: async () => [
+          { accountId: 'alice', keys: { babe: null, grandpa: null, raw: { field0: key('aa'), field1: key('aa') } } },
+          { accountId: 'bob', keys: { babe: null, grandpa: null, raw: { field0: key('bb'), field1: key('bb') } } },
+        ],
+        keyOwner: async (k) => (k === key('aa') ? 'alice' : k === key('bb') ? 'bob' : null),
+      },
+    });
+    const d = new ValidatorDiscovery({ runtime: rt });
+    const result = await d.attribute({ number: 100, hash: hash(100) });
+    expect(result!.authorship.outcome).toBe('authored');
+    expect(result!.authorship.validatorId).toBe('bob');
+    expect(result!.authoritySet.authorities?.[1]?.validatorId).toBe('bob');
+  });
+
   it('returns null when the block has no BABE pre-digest, rather than guessing', async () => {
     const { rt } = runtime({ [hash(100)]: { babePreDigest: async () => null } });
     const d = new ValidatorDiscovery({ runtime: rt });

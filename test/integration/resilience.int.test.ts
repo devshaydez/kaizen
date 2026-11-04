@@ -147,22 +147,6 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       const confidentlyAttributed = ev!.consensus!.authorings.filter(
         (a) => a.outcome === 'authored' && a.validatorId !== null,
       );
-      if (confidentlyAttributed.length === 0) {
-        console.log(
-          'MAPPING DIAG',
-          JSON.stringify(
-            {
-              unavailable: snapshot.unavailable,
-              validators: snapshot.validators.slice(0, 4),
-              nextValidators: snapshot.nextValidators.slice(0, 2),
-              authorities: snapshot.babeAuthorities?.slice(0, 4) ?? null,
-              authorings: ev!.consensus!.authorings.slice(-3),
-            },
-            null,
-            2,
-          ),
-        );
-      }
       expect(confidentlyAttributed.length, `confidently attributed blocks (${incomplete})`).toBeGreaterThan(0);
 
       const attributed = await discovery.attribute(snapshot.at);
