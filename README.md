@@ -15,7 +15,7 @@ Validator operators need a way to demonstrate that their infrastructure can with
 
 Kaizen uses a shared TypeScript engine for network and node operations, monitoring, fault injection, scenarios, evidence, and certificates. The CLI and HTTP API call that engine rather than maintaining separate operational logic. The React web console reads through the API and renders engine-produced data.
 
-The engine manages disposable Portaldot networks, samples node RPC and process state, and can run supported, explicitly requested failure scenarios. Safety gates restrict destructive operations to designated local or development test networks. Run records preserve the selected scenario, observed steps, and verification evidence. The certificate flow can verify and anchor evidence on-chain; the system does not substitute simulated results for missing observations.
+The engine manages disposable Portaldot networks, samples node RPC and process state, and can run supported, explicitly requested failure scenarios. Safety gates restrict destructive operations to designated local or development test networks. Run records preserve the selected scenario, observed steps, and verification evidence, including BABE authorship and GRANDPA finality context read from the chain at the observed blocks. Ambiguous consensus data is recorded as `inconclusive` rather than attributed to a validator. The certificate flow verifies evidence integrity and anchoring; the system does not substitute simulated results for missing observations.
 
 ## Quickstart
 
@@ -32,6 +32,30 @@ npm test
 ```
 
 The workspace scripts and runtime packages are specified in `package.json` and the package manifests. `npm install` installs the workspace dependencies, `npm run build` builds the engine, CLI, API, and web application, and `npm test` runs the unit suite. A real-node integration suite is separate and opt-in; it requires `portaldot_dev` and `KAIZEN_TEST_LIVE=1` as described in [Testing](docs/TESTING.md). The hosted console provides the public live view at https://kaizen-live.vercel.app.
+
+### Reproduce the live drill
+
+`portaldot_dev` is distributed for x86_64, so the live proof runs on an
+x86_64 Linux runner (an arm64 machine cannot download it; RSK-31):
+
+```bash
+KAIZEN_TEST_LIVE=1 KAIZEN_ATTESTATION_DIR=./attestations \
+  npx vitest run --config vitest.integration.config.mts \
+  test/integration/resilience.int.test.ts
+```
+
+The `.github/workflows/resilience-live.yml` job does exactly this on a
+GitHub-hosted x86_64 runner: it boots a real two-node network, pauses a
+validator, captures evidence, certifies with the **public** dev key, and
+verifies the certificate online and offline. It can be started from the
+Actions tab (`workflow_dispatch`) and runs on pull requests touching the
+engine. The `resilience-attestations` artifact contains the certificate,
+verification and score JSON produced by that run; the job also prints a
+short listing and preview of the files. A green workflow is real-node
+verification; the offline unit suite is not a substitute for it.
+
+The twice-hourly `drill-live` workflow publishes a live bundle to the
+`demo-data` branch, which the hosted console reads.
 
 ## Evidence and on-chain anchoring
 

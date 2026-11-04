@@ -1,3 +1,13 @@
+## 2026-11-04 — T-9.7E: CI reproducibility, docs sync, full verification
+
+**Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `.github/workflows/resilience-live.yml`, `README.md`, `docs/ARCHITECTURE.md`, `docs/DEMO.md`, `docs/TESTING.md`, `docs/PHASE_REPORT.md`.
+**Work done**: the live workflow now triggers on pull requests and on engine/node/scenario/V3-anchor changes (not only resilience paths) and prints an attestation listing/preview before upload, so a reviewer can inspect the evidence in the job log. README gained a "Reproduce the live drill" section (exact command, x86_64 requirement, workflow trigger, artifact contents) and names BABE/GRANDPA/inconclusive in "How it works". ARCHITECTURE matrix and new §5.1 describe the consensus-aware evidence pipeline, certificate verdicts and score v2, and the hardened V3 verify checks. DEMO recording notes and TESTING §18 added.
+**Verification (actual)**: `npx vitest run ... resilience-*.test.ts v3-anchor.test.ts` → **145/145 passed**; `npm run typecheck` → PASS; `npm run build` → PASS. `npm test` → **537/541 passed, 4 failed** in pre-existing `apps/web` tests (e.g. `FailureLab.test.tsx` mobile "Toggle menu"; 84/85 in isolation) — files untouched on this branch. `npm run lint` → **FAIL, 28 pre-existing errors** in `apps/web/api/drill.js`, `apps/web/src/App.tsx`, `apps/web/src/pages/Incidents.tsx`, `scripts/demo/publish-drill.mjs`; none in changed files. Live drill NOT run (arm64, no `portaldot_dev`, RSK-31); must be read from the PR workflow run.
+**Problems / decisions**: did not paper over the failing UI tests or lint errors by editing unrelated files or weakening checks; recorded as limitations. `package-lock.json` peer-flag churn remains uncommitted and excluded.
+**Next step**: push branch and open the PR (title required by the task). Do not merge.
+
+---
+
 ## 2026-11-04 — T-9.7D: contract evaluation and anchoring verification
 
 **Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `packages/engine/src/v3/anchor/chain.ts`, `service.ts`, `types.ts`, `packages/engine/test/v3-anchor.test.ts`, `docs/PORTALDOT_INTEGRATION.md` (new), `README.md`, `docs/DECISIONS.md`, `docs/PHASE_REPORT.md`.

@@ -7,10 +7,23 @@ name: resilience-live
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main, feat/proof-of-resilience]
+  pull_request:
     paths:
       - 'packages/engine/src/resilience/**'
+      - 'packages/engine/src/engine.ts'
+      - 'packages/engine/src/node/**'
+      - 'packages/engine/src/scenario/**'
+      - 'packages/engine/src/v3/anchor/**'
+      - 'test/integration/resilience.int.test.ts'
+      - '.github/workflows/resilience-live.yml'
+  push:
+    branches: [main, feat/proof-of-resilience, feat/portaldot-evidence-upgrade]
+    paths:
+      - 'packages/engine/src/resilience/**'
+      - 'packages/engine/src/engine.ts'
+      - 'packages/engine/src/node/**'
+      - 'packages/engine/src/scenario/**'
+      - 'packages/engine/src/v3/anchor/**'
       - 'test/integration/resilience.int.test.ts'
       - '.github/workflows/resilience-live.yml'
 
@@ -35,6 +48,15 @@ jobs:
           KAIZEN_TEST_LIVE: '1'
           KAIZEN_ATTESTATION_DIR: ${{ github.workspace }}/attestations
         run: npx vitest run --config vitest.integration.config.mts test/integration/resilience.int.test.ts
+      - name: Summarize captured evidence
+        if: always()
+        run: |
+          if [ -d attestations ]; then
+            ls -la attestations
+            find attestations -maxdepth 1 -name '*.json' -print -exec sh -c 'head -c 400 "$1"; echo' _ {} \;
+          else
+            echo 'No attestations directory was produced.'
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

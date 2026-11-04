@@ -222,6 +222,48 @@ observed; a phase is not "verified" because code exists.
 
 ---
 
+## Phase E — CI reproducibility, documentation, full verification (2026-11-04)
+
+### CI
+
+- `.github/workflows/resilience-live.yml` now also triggers on pull requests
+  and on engine/node/scenario/V3-anchor changes, not only resilience files.
+  Added a step that lists and previews the attestation JSON so a reviewer can
+  inspect the artifact contents in the job log. The artifact upload remains
+  `if: always()`; a green job (not the offline suite) is the live evidence.
+- `drill-live.yml` unchanged: it is the scheduled/manual public bundle
+  publisher and already uploads artifacts.
+
+### Documentation
+
+- `README.md`: "how it works" now names BABE/GRANDPA evidence and
+  `inconclusive`; new "Reproduce the live drill" section with the exact
+  command, runner requirement, workflow trigger and artifact contents;
+  contract section corrected (revive/EVM deployed, ink! not present).
+- `docs/ARCHITECTURE.md`: matrix rows updated to consensus-aware evidence,
+  certificate verdicts and score v2; new §5.1 evidence pipeline; V3 verify
+  description includes chain id/receipt/record checks.
+- `docs/DEMO.md`: recording notes for consensus evidence and the
+  "inconclusive" wording.
+- `docs/TESTING.md`: §18 with the new suites and actual local results.
+- `docs/PORTALDOT_INTEGRATION.md`: new (Phase D), the authoritative write-up.
+
+### Verification (actual)
+
+| Command | Result |
+|---|---|
+| `npx vitest run ... resilience-*.test.ts v3-anchor.test.ts` | 145/145 PASS |
+| `npm run typecheck` | PASS |
+| `npm run build` | PASS |
+| `npm test` | 537/541; 4 failures in pre-existing `apps/web` UI tests, files untouched on this branch |
+| `npm run lint` | FAIL: 28 pre-existing errors in untouched files (listed in TESTING §18) |
+| Live drill | NOT RUN in this sandbox; result must be read from the PR's `resilience-live` run |
+
+No production infrastructure, mainnet, deployment, or funds were touched.
+The PR is open for review and is **not merged**.
+
+---
+
 ## Phase D — Contract evaluation and anchoring verification (2026-11-04)
 
 ### Implemented (read-only)

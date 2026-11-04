@@ -17,6 +17,11 @@ Story: **create a real Portaldot network → watch it live → break it on purpo
   per method: pick a run that has no remark anchor yet (e.g. a run you
   complete during recording, or `run-mvim7jct-5df7ea0f` if you use the
   evidence data dir).
+- **Consensus evidence**: if you show the run evidence, point at the BABE
+  author and GRANDPA set-id fields, not just the block heights. Say
+  "inconclusive" when the console shows it; do not narrate a validator name
+  the evidence did not establish. The live CI workflow asserts those reads;
+  a local drill that cannot read them records them as unavailable.
 - Pre-warm: network start is health-gated and takes ~1–2 min. Either start
   a two-node network before recording and cut the wait, or record the
   create and jump-cut to "running".
