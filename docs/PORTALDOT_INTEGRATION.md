@@ -16,7 +16,7 @@ Verification vocabulary used here:
 
 | Area | State | Where |
 |---|---|---|
-| Read-only validator discovery (`session.*`, `babe.*`, `grandpa.*`, staking era) | IMPLEMENTED, live run NOT executed in this environment | `packages/engine/src/resilience/discovery.ts`, `consensus-runtime.ts` |
+| Read-only validator discovery (`session.*`, `babe.*`, `grandpa.*`, staking era) | VERIFIED live on a local two-node `portaldot_dev` (CI run 42010057621, 2026-11-05) | `packages/engine/src/resilience/discovery.ts`, `consensus-runtime.ts` |
 | BABE authorship from the block's pre-runtime digest | IMPLEMENTED, offline-tested | `consensus.ts` |
 | GRANDPA `setId` tracking and transition classification | IMPLEMENTED, offline-tested | `consensus.ts`, `evidence.ts` |
 | Evidence recomputation / outcome classification | IMPLEMENTED, offline-tested | `integrity.ts` |
@@ -84,10 +84,14 @@ not claim the stronger check.
 
 `babe.authorities` publishes consensus keys, not account ids. Kaizen maps
 them through `session.queuedKeys` (current session) and
-`session.nextKeys` (next session), comparing raw key bytes. If no mapping
-exists, the authorship remains `authored` (the authority key is known) but
-`validatorId` is null and the evidence is marked incomplete with that
-reason. Kaizen does not guess an account.
+`session.nextKeys` (next session), comparing raw key bytes. When the
+runtime's `SessionKeys` has no named `babe` field (portaldot_dev encodes it
+as a tuple), Kaizen falls back to `session.keyOwner` with the four-byte BABE
+key-type id and the raw authority key; the live drill resolved both
+authorities this way (`0x8eaf…` → `5FHne…`, `0xd435…` → `5Grw…`). If neither
+map yields an account, the authorship remains `authored` (the authority key
+is known) but `validatorId` is null and the evidence is marked incomplete
+with that reason. Kaizen does not guess a tuple position or an account.
 
 ### 2.5 Session, epoch, and transition handling
 
@@ -288,17 +292,17 @@ evidence, certifies with the public dev key, verifies online and offline,
 and uploads the certificate/verification/score artifacts. The live test now
 also asserts that `session.validators`, `babe.authorities` and
 `grandpa.authorities` are readable and that the observed best block is
-attributed to a validator account. **This workflow has not been run for this
-change in the local arm64 sandbox**; its result must be read from the PR's
-CI run, not assumed.
+attributed to a validator account. It cannot run in the local arm64 sandbox;
+it ran on x86_64 CI as run **42010057621** (2026-11-05) and passed. See §11
+for the recorded result.
 
 ## 10. Known limitations and manual steps
 
-- Live consensus reads and live anchoring re-verification are **unverified**
-  until the x86_64 workflow runs. If `session.nextKeys` or
-  `staking.erasRewardPoints` are absent, the evidence records them as
-  unavailable; if `session.queuedKeys` is absent, authorship has no
-  validator account and is marked incomplete.
+- Live consensus reads are verified on the local two-node dev network (run
+  42010057621). Public V3 endpoint polling impact remains **unmeasured**.
+  Live anchoring re-verification was not part of this run. If
+  `session.nextKeys` or `staking.erasRewardPoints` are absent, the evidence
+  records them as unavailable.
 - GRANDPA evidence is finality/set-level, not vote-level.
 - The deployed run registry uses EVM bytecode on revive; the resilience
   registry remains undeployed. Any deployment requires a funded signer and
@@ -306,3 +310,24 @@ CI run, not assumed.
 - Certificate-fingerprint anchoring exists only in the demo script; the
   engine does not expose a verifier for it.
 - No mainnet interaction of any kind is performed or supported.
+
+## 11. Recorded live result (2026-11-05)
+
+GitHub Actions run [42010057621](https://github.com/devshaydez/kaizen/actions/runs/42010057621)
+passed on x86_64 with a real two-node `portaldot_dev` (artifact
+`resilience-attestations`):
+
+- 5 block observations, all `authored`; one BABE authority set
+  (`babe:0:fd284d37a9d1315f`), two authorities both mapped to accounts.
+- 5 GRANDPA finality observations, `setId` 0, lags classified `normal`.
+- Online verification: `verified`, 11 block hashes matched (genesis + best and
+  finalized at each phase); offline verification: `unverifiable` because the
+  network was stopped, as designed. Certificate fingerprint
+  `0x8cbdc85a0ae5735b2177f5410ff68be79273e9e55cb9a2ee32b94c46c88a1da4`.
+- Score v2: 35, quality 0.88, coverage 1, confidence 0.39.
+- Observed runtime facts: `babe.epochStart = [0, 0]` precedes the genesis slot
+  (298979025), so epoch membership is recorded as unchecked rather than
+  rejected; `grandpa.currentSetId` is readable while `grandpa.authorities` is
+  listed in `unavailable`; `SessionKeys` is a four-field tuple.
+- Fault drill: best advanced 4 → 6 while finalized stayed at 2 during the
+  pause, then recovered; no gaps were filled.

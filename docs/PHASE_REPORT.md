@@ -6,6 +6,29 @@ score integrity, contract/anchoring evaluation, reproducible CI). This report
 is updated after each phase. Claims below are limited to what was run and
 observed; a phase is not "verified" because code exists.
 
+## Live verification addendum (2026-11-05)
+
+GitHub Actions run [42010057621](https://github.com/devshaydez/kaizen/actions/runs/42010057621)
+(`resilience-live.yml`, x86_64, real two-node `portaldot_dev`) passed after the
+offline suite. Recorded from its `resilience-attestations` artifact:
+
+- 5 observations, all BABE `authored`; one authority set
+  (`babe:0:fd284d37a9d1315f`) with both authorities mapped to validator
+  accounts; 5 finality observations, `setId` 0, lags `normal`.
+- Online verification `verified` with 11 matching block hashes; offline
+  verification `unverifiable` (network stopped), each with integrity checks
+  passing. Certificate fingerprint
+  `0x8cbdc85a0ae5735b2177f5410ff68be79273e9e55cb9a2ee32b94c46c88a1da4`;
+  score v2 = 35 (quality 0.88, coverage 1, confidence 0.39).
+- Three live-only defects were found and fixed before this green run: the
+  SCALE compact-length prefix on the BABE pre-digest, epoch bounds predating
+  genesis being treated as an error, and unmapped authority keys because
+  `SessionKeys` is a tuple and `session.keyOwner` needs the four-byte BABE
+  key-type id. Each fix has offline regression coverage; none weakened an
+  assertion.
+- Still unverified: public V3 endpoint polling impact, live re-verification of
+  the new anchoring checks, and public-chain behaviour.
+
 ---
 
 ## Phase A — Audit and architecture (2026-11-04)
@@ -153,8 +176,8 @@ observed; a phase is not "verified" because code exists.
 - `npx vitest run --config vitest.config.mts packages/engine/test/resilience-*.test.ts`
   → 8 files, **97 passed** (26 consensus + 13 discovery are new/replaced).
 - `npx tsc -p packages/engine --noEmit` → clean.
-- Live assertions added but **not run locally** (arm64, no `portaldot_dev`);
-  they require the x86_64 `resilience-live.yml` run.
+- Live assertions added locally but **cannot run in the arm64 sandbox**; they
+  ran on x86_64 CI as run **42010057621** and passed. See the live addendum.
 
 ### Known limitations
 
@@ -257,7 +280,7 @@ observed; a phase is not "verified" because code exists.
 | `npm run build` | PASS |
 | `npm test` | 537/541; 4 failures in pre-existing `apps/web` UI tests, files untouched on this branch |
 | `npm run lint` | FAIL: 28 pre-existing errors in untouched files (listed in TESTING §18) |
-| Live drill | NOT RUN in this sandbox; result must be read from the PR's `resilience-live` run |
+| Live drill | PASS on x86_64 CI, run **42010057621** (2026-11-05); see the live addendum |
 
 No production infrastructure, mainnet, deployment, or funds were touched.
 The PR is open for review and is **not merged**.

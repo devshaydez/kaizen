@@ -986,4 +986,4 @@ Actual local results:
 | `npm run build` | PASS (rolldown "use client" notice only) |
 | `npm test` | **537/541 PASS**; 4 pre-existing web UI failures (`apps/web`, files untouched on this branch), e.g. `FailureLab.test.tsx` mobile "Toggle menu"; in isolation 84/85 |
 | `npm run lint` | FAIL — 28 pre-existing errors in `apps/web/api/drill.js`, `apps/web/src/App.tsx`, `apps/web/src/pages/Incidents.tsx`, `scripts/demo/publish-drill.mjs`; none in changed files |
-| Live drill | NOT RUN locally (arm64, no `portaldot_dev`); must be read from the PR workflow run |
+| Live drill | PASS on x86_64 CI, run 42010057621 (2026-11-05); not runnable locally (arm64, no `portaldot_dev`) |
