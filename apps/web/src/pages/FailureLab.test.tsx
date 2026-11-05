@@ -70,7 +70,7 @@ describe('Failure Lab', () => {
     await screen.findByRole('heading', { name: 'Break it on purpose' });
     expect(screen.getByRole('navigation', { name: 'Console' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Networks' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Toggle menu' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open navigation menu' })).toBeInTheDocument();
   });
 
   it('renders a refused dry-run preflight from the 403 body', async () => {

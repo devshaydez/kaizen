@@ -1,7 +1,7 @@
 # Kaizen: Architecture
 
 **Status: IMPLEMENTED BASELINE, with explicitly partial and planned components.**
-**Revision date: 2026-10-30.** Current state is summarized below; the chronological evidence and limitations are recorded in `docs/PROGRESS.md` and `docs/PHASE_REPORT.md`.
+**Revision date: 2026-11-04.** Current state is summarized below; the chronological evidence and limitations are recorded in `docs/PROGRESS.md`, `docs/PHASE_REPORT.md` and `docs/PORTALDOT_INTEGRATION.md`.
 
 Status legend: **IMPLEMENTED** means the component exists in the repository; **PARTIALLY IMPLEMENTED** means only the described slice exists or verification is incomplete; **PLANNED** means not implemented. Implementation status is not a claim of end-to-end verification.
 
@@ -10,9 +10,9 @@ Status legend: **IMPLEMENTED** means the component exists in the repository; **P
 | Shared engine, local process/network lifecycle, API and CLI | IMPLEMENTED | Local Portaldot process management, REST/WebSocket API, and shared-engine CLI surfaces. API security scope is localhost-only; see §8. |
 | Web console and Failure Lab | PARTIALLY IMPLEMENTED | Console surfaces exist; some controls/features are disabled or replay-labelled. T-3.6C design pass is implemented, not a substitute for live-browser verification. |
 | Portaldot V3 probe and run anchoring | IMPLEMENTED | Read-only public V3 probe and explicit signed `KaizenRunRegistry` or remark anchoring paths; historical public transactions are recorded in the phase report. |
-| Resilience evidence capture and verification | IMPLEMENTED | Opt-in chain-bound evidence, observer-node heads/hashes, gap detection and online re-fetch verification. Offline evidence may be `unverifiable`. |
-| Resilience certificates | IMPLEMENTED | Canonical run/evidence certificate with sr25519 signature and integrity verification. Additional validator/network metadata cross-check hardening is pending separate validation. |
-| Resilience scoring v1 | IMPLEMENTED | Deterministic score from eligible certificates; integrity-failing certificates are excluded. Advanced trust model and evidence-class weighting remain planned. |
+| Resilience evidence capture and verification | IMPLEMENTED | Chain-bound evidence with observer heads/hashes and gap detection, plus BABE authorship (digest `authority_index` cross-checked against the block's epoch authority set) and GRANDPA `setId` transition classification. Recovery metrics are recomputed at verification. Live-node CONSENSUS assertions are in the gated x86_64 workflow and are not yet verified there in this change. |
+| Resilience certificates | IMPLEMENTED | Canonical run/evidence certificate with sr25519 signature, evidence hash and outcome; verification reports `verified`/`mismatch`/`unverifiable`/`inconclusive`. Trust remains key-control + evidence integrity, not operator trust. |
+| Resilience scoring v2 | IMPLEMENTED | Deterministic score with eligibility and coverage; missing metrics are penalised differently from bad metrics and unmeasured components are excluded. The trust-weighted v3 model is planned. |
 | `KaizenResilienceRegistry.sol` | PARTIALLY IMPLEMENTED, UNDEPLOYED | Contract/build/codec and in-memory EVM tests exist. It is not deployed; do not describe it as a live registry. Deployment remains blocked until duplicate-fingerprint submission design is resolved. |
 | Incident monitor | PLANNED | The UI may show incident/evidence surfaces, but a full incident-monitoring component is not implemented. |
 | Docker and Kubernetes/Helm adapters | PLANNED | Adapter interface/local-process path exists; Docker and Kubernetes adapters and deployments are not implemented. |
@@ -178,9 +178,10 @@ sequenceDiagram
   signed from `KAIZEN_V3_SIGNER_SURI` only (DEC-026); a runtime dry run
   precedes every submission; anchor rows are persisted `pending` before
   submission and updated with what the chain reported (SQLite migrations
-  19–22: `v3_anchors`, `v3_contracts`). `verify` recomputes the hash and
-  re-reads the chain (block hash, registry `anchoredAt`, `eth_getCode`, or
-  the remark text). Surfaces: CLI `kaizen v3 probe|status|deploy-registry|
+  19–22: `v3_anchors`, `v3_contracts`). `verify` is read-only: it recomputes
+  the run hash, re-reads the block hash, checks the EVM chain id and registry
+  address provenance, confirms the transaction exists and succeeded, and
+  checks `anchoredAt`/`RunAnchored` or the exact remark text. Surfaces: CLI `kaizen v3 probe|status|deploy-registry|
   import-deployment|hash|anchor|anchors|verify`, API `GET /api/v3/probe|
   status|anchors|anchors/:id|runs/:runId/hash`, `POST /api/v3/anchors`
   (`mode:"execute"`), `POST /api/v3/anchors/:id/verify`, WS `v3.anchor` /
@@ -200,8 +201,38 @@ flowchart LR
   reg --> v3[Portaldot V3 TEST<br/>chain id 420420777]
   rem --> v3
   svc -->|persist pending → finalized/failed| db[(v3_anchors)]
-  svc -.->|verify: block hash, anchoredAt, eth_getCode| v3
+  svc -.->|verify: chain id, receipt, anchoredAt, eth_getCode| v3
 ```
+
+### 5.1 Resilience evidence pipeline
+
+The resilience path (`packages/engine/src/resilience/`) is read-only with
+respect to the node's consensus state:
+
+- **Capture** (`evidence.ts`, `consensus-runtime.ts`): per-block heads and
+  hashes from each observer, fault milestones, and consensus context read at
+  the observed block. `NodeConsensusCapture` uses `@polkadot/api` over HTTP
+  with bounded calls and no subscriptions; capture failures are recorded as
+  unavailable, never fabricated.
+- **Discovery** (`discovery.ts`): validator sets and session keys from
+  `session.*`/`babe.*`/`grandpa.*` at an explicit block hash, with a per-block
+  cache. Staking era data is context only, never an authorship source.
+- **Attribution** (`consensus.ts`): BABE authorship from the pre-runtime
+  digest's `authority_index`, gated by epoch bounds and the secondary-slot
+  rule; GRANDPA finality lag classified with `setId` transitions. Ambiguity
+  yields `inconclusive`, never a guessed validator.
+- **Integrity** (`integrity.ts`): recomputes recovery metrics and phase
+  ordering; classifies the drill as passed/failed/inconclusive.
+- **Certificate + verification** (`certificate.ts`, `verify.ts`): canonical
+  signed document plus recomputed evidence hash/outcome, with verdicts that
+  separate tampering/fork/failed-transaction (`mismatch`) from unreachable
+  endpoints (`unverifiable`) and from incomplete-but-authentic evidence
+  (`inconclusive`).
+- **Score** (`score.ts`): v2 deterministic score over eligible certificates
+  with coverage; the v3 trust model is planned.
+
+Methodology, runtime query behaviour and contract/anchor economics are in
+`docs/PORTALDOT_INTEGRATION.md`.
 
 ## 6. Process & Network Lifecycle
 

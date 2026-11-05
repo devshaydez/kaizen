@@ -18,6 +18,18 @@
  */
 
 import { KaizenError } from '../errors';
+import {
+  buildConsensusEvidence,
+  classifyFinalityObservations,
+  epochTransitionsFrom,
+  type BabeAuthoritySet,
+  type BabeAuthorship,
+  type BabeEpochTransition,
+  type ChainConsensusEvidence,
+  type ConsensusContext,
+  type GrandpaFinalityObservation,
+  type GrandpaSetTransition,
+} from './consensus';
 
 export const CHAIN_EVIDENCE_VERSION = 1 as const;
 
@@ -74,6 +86,12 @@ export interface ChainEvidence {
   observations: ChainObservation[];
   gaps: ChainEvidenceGap[];
   metrics: RecoveryMetrics;
+  /**
+   * Consensus context (BABE authorship / GRANDPA finality / era). Optional and
+   * versioned: absent on v1 evidence and on evidence captured without a
+   * consensus source; present when a drill captured authority-set context.
+   */
+  consensus?: ChainConsensusEvidence | null;
 }
 
 const HASH_RE = /^0x[0-9a-f]{64}$/;
@@ -167,6 +185,40 @@ export interface ChainEvidenceRecorderOptions {
   expectedBlockTimeMs?: number;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
+  /**
+   * Optional consensus capture (BABE authorship / GRANDPA finality / era).
+   * When absent, the recorded evidence carries no consensus context and the
+   * evidence is honestly marked without one (incomplete for consensus).
+   */
+  consensus?: ChainConsensusCapture;
+}
+
+/**
+ * Block reference + finality pair handed to consensus sources. The source
+ * resolves authorship / finality semantics (slot, round, authority index) from
+ * its own runtime reads; Kaizen never fabricates them.
+ */
+export interface BabeObservedBlockRef {
+  number: number;
+  hash: string;
+  finalized: BlockRef;
+}
+
+export interface BabeAuthorshipCapture {
+  authorship: BabeAuthorship;
+  /** Authority set observed for (and read at) the attributed block. */
+  authoritySet: BabeAuthoritySet | null;
+}
+
+export interface ChainConsensusCapture {
+  /** Authorship attribution for a block; null ⇒ unavailable. */
+  readAuthoring: (block: BabeObservedBlockRef) => Promise<BabeAuthorshipCapture | null>;
+  /** Finality observation; null ⇒ unavailable. */
+  readFinality: (block: BabeObservedBlockRef) => Promise<GrandpaFinalityObservation | null>;
+  /** Era / session / authority-set context; optional. */
+  readContext?: () => Promise<ConsensusContext | null>;
+  /** Set transitions the source observed (may predate the drill). */
+  transitions?: () => GrandpaSetTransition[];
 }
 
 /**
@@ -183,6 +235,15 @@ export class ChainEvidenceRecorder {
   private faultEndedAt: string | null = null;
   private readonly now: () => Date;
   private readonly sleep: (ms: number) => Promise<void>;
+  private readonly authorings: BabeAuthorship[] = [];
+  private readonly authoritySets: BabeAuthoritySet[] = [];
+  private readonly setBlocks = new Map<string, { blockNumber: number; at: string }>();
+  private readonly finality: GrandpaFinalityObservation[] = [];
+  private readonly transitions: GrandpaSetTransition[] = [];
+  private context: ConsensusContext | null = null;
+  private lastSetId: number | null = null;
+  private consensusCaptureFailed = false;
+  private contextRead = false;
 
   constructor(private readonly opts: ChainEvidenceRecorderOptions) {
     this.now = opts.now ?? (() => new Date());
@@ -204,10 +265,65 @@ export class ChainEvidenceRecorder {
       }
       const o: ChainObservation = { phase, at: this.now().toISOString(), best, finalized };
       this.observations.push(o);
+      if (this.opts.consensus) {
+        await this.collectConsensus(o);
+      }
       return o;
     } catch (e) {
       this.gaps.push({ phase, at: this.now().toISOString(), reason: e instanceof Error ? e.message : String(e) });
       return null;
+    }
+  }
+
+  /**
+   * Best-effort consensus capture. A failed read marks the consensus context
+   * inconclusive; it never fabricates an authority set or finality.
+   */
+  private async collectConsensus(o: ChainObservation): Promise<void> {
+    const cap = this.opts.consensus;
+    if (!cap) return;
+    const block: BabeObservedBlockRef = { number: o.best.number, hash: o.best.hash, finalized: o.finalized };
+    try {
+      const attributed = await cap.readAuthoring(block);
+      if (attributed) {
+        this.authorings.push(attributed.authorship);
+        const set = attributed.authoritySet;
+        if (set && !this.authoritySets.some((s) => s.authoritySetId === set.authoritySetId)) {
+          this.authoritySets.push(set);
+          this.setBlocks.set(set.authoritySetId, { blockNumber: o.best.number, at: o.at });
+        }
+      }
+    } catch {
+      this.consensusCaptureFailed = true;
+    }
+    try {
+      const finality = await cap.readFinality(block);
+      if (finality) {
+        this.finality.push(finality);
+        if (finality.setId !== null) {
+          if (this.lastSetId !== null && finality.setId !== this.lastSetId) {
+            this.transitions.push({
+              fromSetId: this.lastSetId,
+              toSetId: finality.setId,
+              epoch: finality.epoch,
+              finalizedBlock: finality.finalizedNumber,
+              at: finality.at,
+            });
+          }
+          this.lastSetId = finality.setId;
+        }
+      }
+    } catch {
+      this.consensusCaptureFailed = true;
+    }
+    if (this.opts.consensus?.readContext && this.context === null && !this.contextRead) {
+      this.contextRead = true;
+      try {
+        this.context = await this.opts.consensus.readContext();
+      } catch {
+        this.context = null;
+        this.consensusCaptureFailed = true;
+      }
     }
   }
 
@@ -257,6 +373,37 @@ export class ChainEvidenceRecorder {
       observations: [...this.observations],
       gaps: [...this.gaps],
       metrics,
+      consensus: this.buildConsensus(),
     };
+  }
+
+  private buildConsensus(): ChainConsensusEvidence | null {
+    if (!this.opts.consensus) return null;
+    const transitions = this.mergeTransitions();
+    const finality = classifyFinalityObservations(this.finality, transitions);
+    const babeEpochTransitions: BabeEpochTransition[] = epochTransitionsFrom(this.authoritySets, (id) => this.setBlocks.get(id) ?? null);
+    return buildConsensusEvidence({
+      authorings: this.authorings,
+      authoritySets: this.authoritySets,
+      finality,
+      transitions,
+      babeEpochTransitions,
+      context: this.context,
+      captureFailed: this.consensusCaptureFailed,
+    });
+  }
+
+  /**
+   * Merge transitions seen by this recorder with those the source already
+   * observed (pre-drill history matters: a set change shortly before the run
+   * still explains finality settling during it).
+   */
+  private mergeTransitions(): GrandpaSetTransition[] {
+    const bySet = new Map<number, GrandpaSetTransition>();
+    for (const t of [...(this.opts.consensus?.transitions?.() ?? []), ...this.transitions]) {
+      const prior = bySet.get(t.toSetId);
+      if (!prior || prior.fromSetId === null) bySet.set(t.toSetId, t);
+    }
+    return [...bySet.values()].sort((a, b) => a.finalizedBlock - b.finalizedBlock || a.at.localeCompare(b.at));
   }
 }

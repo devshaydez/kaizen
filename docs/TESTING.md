@@ -964,3 +964,26 @@ default suite:
 | `npx vitest run packages/engine/test/scenario-replay.test.ts` | 10/10 PASS |
 | **Total** | **379/379 PASS (29 files)** |
 | Live UI smoke in a real browser | NOT RUN (no browser / no x86_64 userland in this session: RSK-23, RSK-31) |
+
+## 18. T-9.7 consensus/evidence upgrade (2026-11-04)
+
+Offline suites added or extended: `resilience-consensus` (26),
+`resilience-discovery` (13), `resilience-integrity` (13), certificate (12),
+verify (11), evidence (11), score (15), registry (7), service (10), plus
+`v3-anchor` (27). The live integration file gained assertions that
+`session.validators`, `babe.authorities` and `grandpa.authorities` are
+readable and that the observed best block is attributed to a known validator
+account; those assertions only run with `KAIZEN_TEST_LIVE=1` on an x86_64
+host and were **not executed in this sandbox** (RSK-31). CI runs them via
+`.github/workflows/resilience-live.yml`.
+
+Actual local results:
+
+| Command | Result |
+|---|---|
+| `npx vitest run --config vitest.config.mts packages/engine/test/resilience-*.test.ts packages/engine/test/v3-anchor.test.ts` | **145/145 PASS (10 files)** |
+| `npm run typecheck` | PASS |
+| `npm run build` | PASS (rolldown "use client" notice only) |
+| `npm test` | **537/541 PASS**; 4 pre-existing web UI failures (`apps/web`, files untouched on this branch), e.g. `FailureLab.test.tsx` mobile "Toggle menu"; in isolation 84/85 |
+| `npm run lint` | FAIL — 28 pre-existing errors in `apps/web/api/drill.js`, `apps/web/src/App.tsx`, `apps/web/src/pages/Incidents.tsx`, `scripts/demo/publish-drill.mjs`; none in changed files |
+| Live drill | PASS on x86_64 CI, run 42010057621 (2026-11-05); not runnable locally (arm64, no `portaldot_dev`) |

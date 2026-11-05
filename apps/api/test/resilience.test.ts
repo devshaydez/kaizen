@@ -39,13 +39,14 @@ describe('resilience API', () => {
     } as unknown as ScenarioRunRecord);
     engine.store.upsertResilienceEvidence('run-done', {
       version: 1, networkId: 'net_1', validatorId: 'bob', observerNodeId: 'n-alice', genesisHash: h(0),
-      faultStartedAt: at, faultEndedAt: at, recoveredAt: '2026-10-24T00:00:12.000Z',
+      faultStartedAt: at, faultEndedAt: '2026-10-24T00:00:06.000Z', recoveredAt: '2026-10-24T00:00:12.000Z',
       observations: [
         { phase: 'before-fault', at, best: { number: 10, hash: h(10) }, finalized: { number: 8, hash: h(8) } },
+        { phase: 'during-fault', at: '2026-10-24T00:00:06.000Z', best: { number: 11, hash: h(11) }, finalized: { number: 8, hash: h(8) } },
         { phase: 'after-recovery', at: '2026-10-24T00:00:12.000Z', best: { number: 13, hash: h(13) }, finalized: { number: 11, hash: h(11) } },
       ],
       gaps: [],
-      metrics: { recovered: true, timeToRecoverMs: 12_000, finalityGapBlocks: 2, blocksMissed: null, expectedBlockTimeMs: 6_000 },
+      metrics: { recovered: true, timeToRecoverMs: 6_000, finalityGapBlocks: 3, blocksMissed: 0, expectedBlockTimeMs: 6_000 },
     });
     fingerprint = (await engine.resilience.certifyRun('run-done', { allowDevKey: true })).fingerprint;
   });
@@ -61,7 +62,7 @@ describe('resilience API', () => {
     expect(all.statusCode).toBe(200);
     expect(all.json().scores.map((s: { validatorId: string }) => s.validatorId)).toEqual(['bob']);
     const one = await app.inject({ method: 'GET', url: '/api/resilience/scores/bob' });
-    expect(one.json().score).toMatchObject({ validatorId: 'bob', runs: 1, version: 1 });
+    expect(one.json().score).toMatchObject({ validatorId: 'bob', runs: 1, version: 2 });
     const none = await app.inject({ method: 'GET', url: '/api/resilience/scores/nobody' });
     expect(none.json().score).toMatchObject({ score: 0, runs: 0 });
   });

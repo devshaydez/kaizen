@@ -36,6 +36,21 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
+    // Node scripts (demo publisher, web screenshot harness) and the Vercel
+    // function run under Node, not the browser — declare the runtime globals
+    // they legitimately use.
+    files: ['scripts/**/*.mjs', 'apps/web/api/**/*.js'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+      },
+    },
+  },
+  {
     // Node ESM test scripts (experiment harnesses) run under Node, not the
     // browser — declare the Node/runtime globals they legitimately use.
     files: ['test/**/*.mjs', 'contracts/**/*.mjs'],

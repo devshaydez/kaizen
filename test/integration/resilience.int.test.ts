@@ -16,7 +16,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createEngine, type KaizenEngine, type ScenarioInput } from '@kaizen/engine';
+import {
+  PolkadotConsensusRuntime,
+  ValidatorDiscovery,
+  createEngine,
+  type KaizenEngine,
+  type ScenarioInput,
+} from '@kaizen/engine';
 import { LIVE, SHARED_BIN_CACHE, ensureSharedBinary, httpRpc, testRoot, waitFor } from './testkit';
 
 interface Health {
@@ -53,15 +59,23 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       async () => Number.parseInt((await httpRpc<{ number: string }>(observerPort, 'chain_getHeader', [await httpRpc<string>(observerPort, 'chain_getFinalizedHead')])).number, 16) >= 2,
       { timeoutMs: 120_000, label: 'finalized >= 2' },
     );
-  }, 300_000);
+    // Binary download + two-node boot can exceed five minutes on a cold
+    // runner; a timeout here must not be confused with a drill failure.
+  }, 600_000);
 
   afterAll(async () => {
     try {
+      if (!engine) {
+        if (dir) fs.rmSync(dir, { recursive: true, force: true });
+        return;
+      }
       for (const n of engine.networks.list()) if (n.status === 'running' || n.status === 'starting') await engine.networks.stop(n.id);
     } finally {
-      await engine.processes.killAll();
-      await engine.close();
-      fs.rmSync(dir, { recursive: true, force: true });
+      if (engine) {
+        await engine.processes.killAll();
+        await engine.close();
+      }
+      if (dir) fs.rmSync(dir, { recursive: true, force: true });
     }
   });
 
@@ -102,6 +116,45 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
     // Independent check: every captured hash is the canonical hash at that number.
     for (const o of ev!.observations) {
       expect(await httpRpc<string>(observerPort, 'chain_getBlockHash', [o.finalized.number])).toBe(o.finalized.hash);
+    }
+
+    // Consensus evidence captured from the observer's own runtime state. This
+    // asserts real reads against the running network: session validators,
+    // BABE authorities, GRANDPA authorities, and one attributed block.
+    expect(ev!.consensus, 'consensus capture was wired for the drill').not.toBeNull();
+    const discovery = new ValidatorDiscovery({
+      runtime: new PolkadotConsensusRuntime({ rpcUrl: `http://127.0.0.1:${observerPort}` }),
+    });
+    try {
+      const incomplete = ev!.consensus!.incompleteReasons.join('; ') || 'none';
+      expect(ev!.consensus!.authorings.length, `BABE authorship observations (${incomplete})`).toBeGreaterThan(0);
+
+      expect(ev!.consensus!.authoritySets.length, 'authority sets used for attribution').toBeGreaterThan(0);
+      expect(ev!.consensus!.finality.length, 'GRANDPA finality observations').toBeGreaterThan(0);
+
+      const snapshot = await discovery.snapshot();
+      expect(snapshot.validators.length, 'session.validators / session.queuedKeys').toBeGreaterThan(0);
+      expect(snapshot.babeAuthorities?.length ?? 0, 'babe.authorities').toBeGreaterThan(0);
+      expect(snapshot.grandpaSetId, 'grandpa.currentSetId').not.toBeNull();
+      // portaldot_dev exposes the GRANDPA set id but not a `grandpa.authorities`
+      // query. That is acceptable only if the absence is recorded; when the
+      // query exists, its list must be real and non-empty.
+      if (snapshot.grandpaAuthorities === null) {
+        expect(snapshot.unavailable, 'grandpa.authorities absence must be recorded').toContain('grandpa.authorities');
+      } else {
+        expect(snapshot.grandpaAuthorities.length, 'grandpa.authorities').toBeGreaterThan(0);
+      }
+      const confidentlyAttributed = ev!.consensus!.authorings.filter(
+        (a) => a.outcome === 'authored' && a.validatorId !== null,
+      );
+      expect(confidentlyAttributed.length, `confidently attributed blocks (${incomplete})`).toBeGreaterThan(0);
+
+      const attributed = await discovery.attribute(snapshot.at);
+      expect(attributed, 'BABE pre-digest on the observed best block').not.toBeNull();
+      expect(attributed!.authorship.outcome, attributed!.authorship.reasons.join('; ')).toBe('authored');
+      expect(attributed!.authorship.validatorId, 'authority key mapped to a validator account').toBeTruthy();
+    } finally {
+      await discovery.close();
     }
 
     const cert = await engine.resilience.certifyRun(run.id, { allowDevKey: true });

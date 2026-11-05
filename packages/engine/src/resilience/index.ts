@@ -12,7 +12,10 @@ export {
   isBlockRef,
 } from './evidence';
 export type {
+  BabeAuthorshipCapture,
+  BabeObservedBlockRef,
   BlockRef,
+  ChainConsensusCapture,
   ChainEvidence,
   ChainEvidenceGap,
   ChainEvidencePhase,
@@ -24,6 +27,51 @@ export type {
 export { ChainUnreachableError, createHttpChainReader } from './rpc';
 export type { ChainReader, FetchLike, HttpChainReaderOptions } from './rpc';
 export {
+  BABE_AUTHORSHIP_VERSION,
+  DEFAULT_EXPECTED_FINALITY_LAG_BLOCKS,
+  DEFAULT_TRANSITION_TOLERANCE_MS,
+  GRANDPA_FINALITY_VERSION,
+  attributeBabeAuthorship,
+  babeSecondaryAuthorIndex,
+  buildConsensusEvidence,
+  checkGrandpaTransitionHistory,
+  classifyFinalityGap,
+  classifyFinalityObservations,
+  decodeBabePreDigest,
+  epochTransitionsFrom,
+  stripCompactLengthPrefix,
+} from './consensus';
+export type {
+  AttributeBabeInput,
+  BabeAttributionOutcome,
+  BabeAuthorship,
+  BabeAuthority,
+  BabeAuthoritySet,
+  BabeEpochContext,
+  BabeEpochTransition,
+  BabePreDigest,
+  BabePreDigestKind,
+  ChainConsensusEvidence,
+  ClassifyFinalityInput,
+  ConsensusContext,
+  FinalityClassification,
+  GrandpaFinalityObservation,
+  GrandpaSetTransition,
+} from './consensus';
+export { ValidatorDiscovery, authoritySetId, isZeroHash } from './discovery';
+export type {
+  AuthorityEntry,
+  ConsensusRuntime,
+  ConsensusRuntimeView,
+  DiscoveredValidator,
+  EraContext,
+  SessionKeySet,
+  ValidatorDiscoveryOptions,
+  ValidatorDiscoverySnapshot,
+} from './discovery';
+export { NodeConsensusCapture, PolkadotConsensusRuntime, createNodeConsensusCapture } from './consensus-runtime';
+export type { ConsensusRuntimeOptions } from './consensus-runtime';
+export {
   KAIZEN_CERTIFICATE_VERSION,
   certificateDocument,
   certificateMessage,
@@ -31,7 +79,11 @@ export {
   computeCertificateFingerprint,
   issueCertificate,
 } from './certificate';
-export type { CertificateSignature, ResilienceCertificate, SignatureCheck } from './certificate';
+export type {
+  CertificateSignature,
+  ResilienceCertificate,
+  SignatureCheck,
+} from './certificate';
 export {
   DEV_RESILIENCE_SIGNER_URI,
   RESILIENCE_SIGNER_ENV_KEY,
@@ -41,7 +93,21 @@ export {
 } from './signer';
 export type { LoadResilienceSignerOptions, ResilienceSigner, ResilienceSignerSource } from './signer';
 export { verifyCertificate, verifyChainEvidence } from './verify';
-export type { BlockCheck, CertificateVerification, ChainCheck, ChainCheckStatus } from './verify';
+export type {
+  BlockCheck,
+  CertificateVerification,
+  CertificateVerdict,
+  ChainCheck,
+  ChainCheckStatus,
+} from './verify';
+export { assessDrill, checkEvidenceIntegrity, scoringFinalityGap } from './integrity';
+export type {
+  ConsensusIntegrity,
+  DrillAssessment,
+  DrillOutcome,
+  EvidenceCheck,
+  EvidenceIntegrity,
+} from './integrity';
 export { RESILIENCE_SCORE_PARAMS, RESILIENCE_SCORE_VERSION, computeResilienceScore, scoreRun } from './score';
 export type { ResilienceScore, ScoredRun, ScoredRunInput } from './score';
 export {

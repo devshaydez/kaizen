@@ -88,6 +88,7 @@ interface FakeOptions {
   connectError?: Error;
   blockHashAt?: string | null;
   remarkText?: string | null;
+  txSuccess?: boolean;
 }
 
 class FakeChain implements V3ChainConnector {
@@ -132,6 +133,18 @@ class FakeChain implements V3ChainConnector {
         tx === '0x' + '00'.repeat(32)
           ? null
           : { contract: tx === '0x' + '33'.repeat(32) ? null : REGISTRY, signer: ALICE, blockNumber: 4000, success: true, events: ['revive.Instantiated'] },
+      extrinsicAt: async (_b, tx) =>
+        tx === '0x' + '00'.repeat(32)
+          ? null
+          : {
+              signer: ALICE,
+              blockNumber: 4242,
+              success: self.opts.txSuccess ?? true,
+              events: ['system.ExtrinsicSuccess'],
+              logs: [],
+              remarkHash: null,
+              instantiated: null,
+            },
       remarkAt: async () => (self.opts.remarkText !== undefined ? self.opts.remarkText : null),
       submitRemark: async (_signer, payload) => {
         self.calls.push({ kind: 'remark', args: [payload] });
@@ -183,7 +196,15 @@ function setup(opts: FakeOptions = {}, env: NodeJS.ProcessEnv = { KAIZEN_V3_SIGN
   });
   const chain = new FakeChain(opts);
   const evmRpc = {
-    post: async () => ({ httpStatus: 200, json: { jsonrpc: '2.0', id: 1, result: '0x6080' }, id: 1 }),
+    post: async (input: { method: string }) => ({
+      httpStatus: 200,
+      json: {
+        jsonrpc: '2.0',
+        id: 1,
+        result: input.method === 'eth_chainId' ? `0x${(420420777).toString(16)}` : '0x6080',
+      },
+      id: 1,
+    }),
   };
   const svc = new V3AnchorService({ store, events, connector: chain, env, evmRpc });
   return { store, events, seen, chain, svc };
@@ -446,8 +467,19 @@ describe('V3AnchorService', () => {
     const run = makeRun(store);
     const anchor = await svc.anchorRun(run.id);
     const v = await svc.verify(anchor.id);
-    expect(v).toMatchObject({ verdict: 'verified', hashMatches: true, blockHashMatches: true, contractCodePresent: true });
+    expect(v).toMatchObject({
+      verdict: 'verified',
+      hashMatches: true,
+      blockHashMatches: true,
+      contractCodePresent: true,
+      chainIdMatches: true,
+      contractAddressMatches: true,
+      txHashMatches: true,
+      txSucceeded: true,
+      onChainRecordMatches: true,
+    });
     expect(v.onChainAnchoredAt).toBe(1_761_000_000);
+    expect(v.evmChainId).toBe(420420777);
 
     const notOnChain = setup({ anchoredAt: 0n }, { KAIZEN_V3_SIGNER_SURI: DEV_SURI, KAIZEN_V3_REGISTRY_ADDRESS: REGISTRY });
     const a2 = await notOnChain.svc.anchorRun(makeRun(notOnChain.store).id);
@@ -467,6 +499,43 @@ describe('V3AnchorService', () => {
     good.chain.opts.remarkText = anchor.payload;
     good.chain.opts.blockHashAt = '0x' + '00'.repeat(31) + '01';
     expect((await good.svc.verify(anchor.id)).verdict).toBe('mismatch');
+  });
+
+  it('reports a failed transaction receipt, a missing transaction and a chain-id mismatch', async () => {
+    const failed = setup({ txSuccess: false }, { KAIZEN_V3_SIGNER_SURI: DEV_SURI, KAIZEN_V3_REGISTRY_ADDRESS: REGISTRY });
+    const a1 = await failed.svc.anchorRun(makeRun(failed.store).id);
+    const v1 = await failed.svc.verify(a1.id);
+    expect(v1.txSucceeded).toBe(false);
+    expect(v1.verdict).toBe('mismatch');
+    expect(v1.notes.join('\n')).toMatch(/did not report system.ExtrinsicSuccess/);
+
+    const missing = setup();
+    const a2 = await missing.svc.anchorRun(makeRun(missing.store).id, { method: 'remark' });
+    const store = missing.store as unknown as { db: { prepare(sql: string): { run(...args: unknown[]): unknown } } };
+    store.db.prepare('UPDATE v3_anchors SET tx_hash = ? WHERE id = ?').run('0x' + '00'.repeat(32), a2.id);
+    const v2 = await missing.svc.verify(a2.id);
+    expect(v2.txHashMatches).toBe(false);
+    expect(v2.verdict).toBe('mismatch');
+    expect(v2.notes.join('\n')).toMatch(/was not found in the recorded block/);
+  });
+
+  it('reports an EVM chain-id mismatch even when the Substrate block matches', async () => {
+    const s = setup(undefined, { KAIZEN_V3_SIGNER_SURI: DEV_SURI, KAIZEN_V3_REGISTRY_ADDRESS: REGISTRY });
+    const anchor = await s.svc.anchorRun(makeRun(s.store).id);
+    const other = new V3AnchorService({
+      store: s.store,
+      events: new EventBus(),
+      connector: s.chain,
+      env: { KAIZEN_V3_SIGNER_SURI: DEV_SURI, KAIZEN_V3_REGISTRY_ADDRESS: REGISTRY },
+      evmRpc: {
+        post: async () => ({ httpStatus: 200, json: { jsonrpc: '2.0', id: 1, result: '0x1' }, id: 1 }),
+      },
+    });
+    const v = await other.verify(anchor.id);
+    expect(v.evmChainId).toBe(1);
+    expect(v.chainIdMatches).toBe(false);
+    expect(v.verdict).toBe('mismatch');
+    expect(v.notes.join('\n')).toMatch(/does not match the configured expected chain id/);
   });
 
   it('imports a past deployment only from chain evidence', async () => {

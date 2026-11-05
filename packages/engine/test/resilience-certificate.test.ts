@@ -64,6 +64,8 @@ describe('issueCertificate + checkCertificateSignature', () => {
     expect(cert.runHash).toBe(computeRunHash(run));
     expect(cert.signature).toMatchObject({ address: BOB, scheme: 'sr25519', source: 'env', dev: false });
     expect(cert.signature.signature).toMatch(/^0x[0-9a-f]{128}$/);
+    expect(cert.evidenceHash).toMatch(/^0x[0-9a-f]{64}$/);
+    expect(cert.outcome).toBe('passed');
     expect(JSON.stringify(cert)).not.toContain('//Bob');
     await expect(checkCertificateSignature(cert, run)).resolves.toMatchObject({
       fingerprintMatches: true,

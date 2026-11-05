@@ -828,3 +828,16 @@ Date: 2026-10-31.
 Context: mentors asked whether pallet-contracts is Portaldot's recommended production path or whether Kaizen should target the EVM/revive side, and noted the official ink! documentation has stated it will no longer be actively maintained or developed from January 2026. Measured costs on V3: registry (6.8 KB) upload plus instance deposit ~548 tPOT; certificate anchor ~1.4 tPOT via ink! vs ~7.7 tPOT on the equivalent EVM registry.
 
 Decision: keep the registry on ink!/pallet-contracts for the hackathon scope. The choice is documented in the README and submission writeup with the cost comparison and the maintenance-horizon tradeoff. Because all anchoring goes through `V3AnchorService`, a future port to revive/PolkaVM is scoped as a change to that one service boundary. Cost logic reads live chain deposits at runtime; deposit levels are expected to continue being adjusted.
+
+**Evidence audit addendum (2026-11-04, T-9.7D).** The repository contains no
+ink! source, ink! build artifact, or deployment transaction for a registry.
+The only contract sources are `contracts/KaizenRunRegistry.sol` and
+`contracts/KaizenResilienceRegistry.sol` (Solidity/EVM), and the resilience
+registry remains undeployed (RSK-30). The ~548 tPOT / ~1.4 tPOT ink! figures
+above therefore have no reproducible artifact or recorded transaction in
+this repository and are **UNVERIFIED**; they must not be presented as
+measured Kaizen results until reproduced. The deployed run-anchoring path is
+revive/EVM and is recorded live (T-8.2). The decision above is left in place
+as the historical record; the current implementation and the evidence-based
+comparison are documented in `docs/PORTALDOT_INTEGRATION.md`. No migration or
+deployment is performed by this audit.
