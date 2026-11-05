@@ -15,7 +15,6 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { ApiPromise, HttpProvider } from '@polkadot/api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   PolkadotConsensusRuntime,
@@ -148,63 +147,6 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       const confidentlyAttributed = ev!.consensus!.authorings.filter(
         (a) => a.outcome === 'authored' && a.validatorId !== null,
       );
-      if (confidentlyAttributed.length === 0) {
-        const api = await ApiPromise.create({
-          provider: new HttpProvider(`http://127.0.0.1:${observerPort}`),
-          noInitWarn: true,
-          throwOnConnect: true,
-        });
-        try {
-          const q = api.query['session']?.['keyOwner'] as unknown as (arg: unknown) => Promise<unknown>;
-          const observed = ev!.consensus!.authorings.at(-1)!.authorityKey!;
-          const describe = (v: unknown): unknown => {
-            const c = v as {
-              toJSON?: () => unknown;
-              toString: () => string;
-              isEmpty?: boolean;
-              isSome?: boolean;
-              unwrap?: () => { toString(): string };
-            };
-            return {
-              json: c.toJSON?.(),
-              text: c.toString(),
-              isEmpty: c.isEmpty,
-              isSome: c.isSome,
-              inner: c.unwrap?.().toString(),
-            };
-          };
-          const query = async (arg: unknown): Promise<unknown> => {
-            try {
-              return describe(await q(arg));
-            } catch (e) {
-              return `error: ${e instanceof Error ? e.message : String(e)}`;
-            }
-          };
-          const keyType = new Uint8Array([0x62, 0x61, 0x62, 0x65]); // 'babe'
-          const fields = snapshot.validators.slice(0, 2).map((v) => ({ account: v.accountId, raw: v.sessionKeys.raw }));
-          const mapped: Array<{ account: string; field: string; key: string; owner: unknown }> = [];
-          for (const v of fields) {
-            for (const [field, key] of Object.entries(v.raw)) {
-              mapped.push({ account: v.account, field, key, owner: await query([keyType, key]) });
-            }
-          }
-          console.log(
-            'KEYOWNER DIAG',
-            JSON.stringify(
-              {
-                observed,
-                hexStringTuple: await query(['0x62616265', observed]),
-                byteTuple: await query([keyType, observed]),
-                mapped,
-              },
-              null,
-              2,
-            ),
-          );
-        } finally {
-          await api.disconnect();
-        }
-      }
       expect(confidentlyAttributed.length, `confidently attributed blocks (${incomplete})`).toBeGreaterThan(0);
 
       const attributed = await discovery.attribute(snapshot.at);

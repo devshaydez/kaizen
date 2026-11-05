@@ -391,8 +391,11 @@ class PolkadotView implements ConsensusRuntimeView {
   async keyOwner(key: string): Promise<string | null> {
     if (!/^0x[0-9a-fA-F]{64}$/.test(key)) return null;
     // session.keyOwner is a map keyed by the tuple (KeyTypeId, Bytes), so the
-    // pair is one argument. This facade resolves BABE keys ('babe').
-    const value = await this.call<unknown>('session', 'keyOwner', [['0x62616265', key]]);
+    // pair is one argument and the type id must be its four bytes, not a hex
+    // string (which would be encoded as ten text bytes). This facade resolves
+    // BABE authority keys, so the id is fixed.
+    const keyType = new Uint8Array([0x62, 0x61, 0x62, 0x65]); // 'babe'
+    const value = await this.call<unknown>('session', 'keyOwner', [[keyType, key]]);
     return accountIdOf(value);
   }
 
