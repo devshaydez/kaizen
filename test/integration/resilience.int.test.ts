@@ -180,14 +180,22 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
               return `error: ${e instanceof Error ? e.message : String(e)}`;
             }
           };
+          const keyType = new Uint8Array([0x62, 0x61, 0x62, 0x65]); // 'babe'
+          const fields = snapshot.validators.slice(0, 2).map((v) => ({ account: v.accountId, raw: v.sessionKeys.raw }));
+          const mapped: Array<{ account: string; field: string; key: string; owner: unknown }> = [];
+          for (const v of fields) {
+            for (const [field, key] of Object.entries(v.raw)) {
+              mapped.push({ account: v.account, field, key, owner: await query([keyType, key]) });
+            }
+          }
           console.log(
             'KEYOWNER DIAG',
             JSON.stringify(
               {
                 observed,
-                hexTuple: await query(['0x62616265', observed]),
-                textTuple: await query(['babe', observed]),
-                noPrefix: await query(['0x62616265', observed.slice(2)]),
+                hexStringTuple: await query(['0x62616265', observed]),
+                byteTuple: await query([keyType, observed]),
+                mapped,
               },
               null,
               2,
