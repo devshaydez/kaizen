@@ -15,6 +15,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { ApiPromise, HttpProvider } from '@polkadot/api';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   PolkadotConsensusRuntime,
@@ -147,6 +148,55 @@ describe.runIf(LIVE)('Proof-of-Resilience (live, real network)', () => {
       const confidentlyAttributed = ev!.consensus!.authorings.filter(
         (a) => a.outcome === 'authored' && a.validatorId !== null,
       );
+      if (confidentlyAttributed.length === 0) {
+        const api = await ApiPromise.create({
+          provider: new HttpProvider(`http://127.0.0.1:${observerPort}`),
+          noInitWarn: true,
+          throwOnConnect: true,
+        });
+        try {
+          const q = api.query['session']?.['keyOwner'] as unknown as (arg: unknown) => Promise<unknown>;
+          const observed = ev!.consensus!.authorings.at(-1)!.authorityKey!;
+          const describe = (v: unknown): unknown => {
+            const c = v as {
+              toJSON?: () => unknown;
+              toString: () => string;
+              isEmpty?: boolean;
+              isSome?: boolean;
+              unwrap?: () => { toString(): string };
+            };
+            return {
+              json: c.toJSON?.(),
+              text: c.toString(),
+              isEmpty: c.isEmpty,
+              isSome: c.isSome,
+              inner: c.unwrap?.().toString(),
+            };
+          };
+          const query = async (arg: unknown): Promise<unknown> => {
+            try {
+              return describe(await q(arg));
+            } catch (e) {
+              return `error: ${e instanceof Error ? e.message : String(e)}`;
+            }
+          };
+          console.log(
+            'KEYOWNER DIAG',
+            JSON.stringify(
+              {
+                observed,
+                hexTuple: await query(['0x62616265', observed]),
+                textTuple: await query(['babe', observed]),
+                noPrefix: await query(['0x62616265', observed.slice(2)]),
+              },
+              null,
+              2,
+            ),
+          );
+        } finally {
+          await api.disconnect();
+        }
+      }
       expect(confidentlyAttributed.length, `confidently attributed blocks (${incomplete})`).toBeGreaterThan(0);
 
       const attributed = await discovery.attribute(snapshot.at);
