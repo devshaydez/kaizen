@@ -1,3 +1,13 @@
+## 2026-11-05 — T-9.7 fix: clear the remaining suite, lint and typecheck failures
+
+**Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `eslint.config.mjs`, `apps/web/src/App.tsx`, `apps/web/src/pages/Incidents.tsx`, `apps/web/src/pages/FailureLab.test.tsx`, `apps/web/src/api/replay/v3.ts`, `apps/api/test/resilience.test.ts`, `packages/cli/test/resilience-commands.test.ts`.
+**Work done**: declared Node globals for `scripts/**/*.mjs` and `apps/web/api/**/*.js` in the flat ESLint config and removed two genuinely unused symbols (`STEP_PATHS`, a `Planned` import). The API and CLI resilience fixtures were completed with the missing `during-fault` observation and internally consistent stored metrics; this fixed both the score `runs: 0` regressions and the CLI's `MISMATCH` verdict, which were symptoms of evidence that no longer passed the new integrity recomputation. The stale web assertion now uses the shell's actual accessible name (`Open navigation menu`). The web replay verifier now fills the Phase D verification fields: it reads the EVM chain id, validates that a contract anchor names a recorded deployment, and reports `txSucceeded` / registry-record checks as unavailable in the browser rather than claiming them.
+**Verification (actual)**: `npm test` → **545/545 passed, 45 files**; `npm run lint` → **0 errors**; `npm run typecheck` → clean (engine, CLI, API, web); `npm run build` → PASS. No assertions were removed or weakened; the fixtures were corrected to satisfy the integrity checks.
+**Problems / decisions**: the API/CLI failures were real fixture defects exposed by score v2, not pre-existing product failures. Browser verification remains intentionally partial; the limitation is stated in the verification notes.
+**Next step**: PR #39 review (not merged); optional public-V3 polling measurement and engine-side live anchoring re-verification.
+
+---
+
 ## 2026-11-05 — T-9.7: live drill passes on a real two-node network
 
 **Branch**: `feat/portaldot-evidence-upgrade`. **Files**: `packages/engine/src/resilience/consensus-runtime.ts`, `discovery.ts`, `packages/engine/test/resilience-discovery.test.ts`, `test/integration/resilience.int.test.ts`, `docs/PORTALDOT_INTEGRATION.md`, `docs/PHASE_REPORT.md`, `docs/TECHNICAL_RESEARCH.md`, `docs/IMPLEMENTATION_PLAN.md`, `docs/TESTING.md`.

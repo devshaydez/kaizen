@@ -113,10 +113,11 @@ beforeAll(async () => {
     faultStartedAt: at, faultEndedAt: '2026-10-24T00:01:00.000Z', recoveredAt: '2026-10-24T00:01:12.000Z',
     observations: [
       { phase: 'before-fault', at, best: { number: 10, hash: h(10) }, finalized: { number: 8, hash: h(8) } },
-      { phase: 'after-recovery', at: '2026-10-24T00:01:12.000Z', best: { number: 16, hash: h(16) }, finalized: { number: 13, hash: h(13) } },
+      { phase: 'during-fault', at: '2026-10-24T00:01:00.000Z', best: { number: 20, hash: h(20) }, finalized: { number: 15, hash: h(15) } },
+      { phase: 'after-recovery', at: '2026-10-24T00:01:12.000Z', best: { number: 22, hash: h(22) }, finalized: { number: 19, hash: h(19) } },
     ],
     gaps: [],
-    metrics: { recovered: true, timeToRecoverMs: 12_000, finalityGapBlocks: 3, blocksMissed: 2, expectedBlockTimeMs: 6_000 },
+    metrics: { recovered: true, timeToRecoverMs: 12_000, finalityGapBlocks: 5, blocksMissed: 0, expectedBlockTimeMs: 6_000 },
   });
   await engine.close();
 });

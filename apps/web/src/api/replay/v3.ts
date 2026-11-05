@@ -288,10 +288,25 @@ export async function verifyAnchorLive(fetchImpl: FetchLike, d: ReplayData, anch
   else notes.push('run record not published (certificate only); checked the hashes inside the extrinsic instead');
   let blockHashMatches: boolean | null = null;
   let contractCodePresent: boolean | null = null;
+  let evmChainId: number | null = null;
+  let chainIdMatches: boolean | null = null;
+  let contractAddressMatches: boolean | null = null;
   let unverifiable = false;
   let txFound: boolean | null = null;
   let payloadOk: boolean | null = null;
   try {
+    const cid = await rpc<string>(fetchImpl, V3_EVM_RPC, 'eth_chainId', []);
+    evmChainId = Number.parseInt(cid, 16);
+    chainIdMatches = evmChainId === V3_EVM_CHAIN_ID;
+    notes.push(`EVM chain id ${evmChainId} ${chainIdMatches ? 'matches' : 'DIFFERS from'} ${V3_EVM_CHAIN_ID} (eth_chainId now)`);
+    if (anchor.method === 'contract') {
+      contractAddressMatches = Boolean(
+        anchor.contractAddress &&
+          /^0x[0-9a-fA-F]{40}$/.test(anchor.contractAddress) &&
+          contractsOf(d).some((c) => c.address.toLowerCase() === anchor.contractAddress!.toLowerCase()),
+      );
+      notes.push(`contract address ${contractAddressMatches ? 'is a recorded deployment' : 'is NOT a recorded deployment'}`);
+    }
     if (anchor.blockNumber !== null) {
       const live = await rpc<string | null>(fetchImpl, V3_RPC, 'chain_getBlockHash', [anchor.blockNumber]);
       blockHashMatches = live !== null && live === anchor.blockHash;
@@ -323,7 +338,12 @@ export async function verifyAnchorLive(fetchImpl: FetchLike, d: ReplayData, anch
     unverifiable = true;
     notes.push(`V3 node unreachable from the browser: ${(e as Error).message}`);
   }
-  const checks = [hashMatches, blockHashMatches, contractCodePresent, txFound, payloadOk].filter((x): x is boolean => x !== null);
+  if (anchor.method === 'contract' && anchor.txHash) {
+    notes.push('transaction success and the registry `anchoredAt` record are checked by the engine/CLI, not by this browser verifier');
+  }
+  const checks = [hashMatches, blockHashMatches, contractCodePresent, txFound, payloadOk, chainIdMatches, contractAddressMatches].filter(
+    (x): x is boolean => x !== null,
+  );
   const verdict: V3AnchorVerification['verdict'] = unverifiable ? 'unverifiable' : checks.every(Boolean) ? 'verified' : 'mismatch';
   return {
     anchorId: anchor.id,
@@ -334,6 +354,12 @@ export async function verifyAnchorLive(fetchImpl: FetchLike, d: ReplayData, anch
     onChainAnchoredAt: null,
     contractCodePresent,
     blockHashMatches,
+    evmChainId,
+    chainIdMatches,
+    contractAddressMatches,
+    txHashMatches: txFound,
+    txSucceeded: null,
+    onChainRecordMatches: anchor.method === 'remark' ? payloadOk : null,
     verdict,
     notes,
     at: now(),

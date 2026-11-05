@@ -56,9 +56,6 @@ export const NAV: NavItem[] = [
 
 const ACTION_PATHS = new Set(['/create', '/live', '/lab', '/scenarios']);
 
-/** Where each lifecycle pill navigates. */
-const STEP_PATHS = ['/create', '/overview', '/lab', '/incidents', '/lab', '/deployments'];
-
 /** Lifecycle step for the current route (−1 = not a lifecycle page). */
 export function stepFor(path: string): number {
   if (path.startsWith('/create')) return 0;

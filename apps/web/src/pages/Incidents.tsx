@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import type { FaultRecord } from '../api/types';
-import { Btn, Empty, NoNet, Planned, ease } from '../components/ui';
+import { Btn, Empty, NoNet, ease } from '../components/ui';
 import { formatTs, shortId } from '../components/fmt';
 import { ACTIVE_FAULT_STATES, healthyCount } from '../lib/model';
 import { useConsole } from '../state/ConsoleContext';
