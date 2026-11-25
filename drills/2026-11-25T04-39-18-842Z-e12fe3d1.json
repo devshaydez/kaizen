@@ -1,0 +1,1253 @@
+{
+  "kaizenDemoBundle": 1,
+  "id": "2026-11-25T04-39-18-842Z-e12fe3d1",
+  "publishedAt": "2026-11-25T04:39:18.842Z",
+  "certificate": {
+    "version": 1,
+    "fingerprint": "0xe12fe3d16247d39e33863244120c640785ebdd05e2b0392a0a7b851122840f45",
+    "runId": "run-mwvmvrmc-11f060df",
+    "runHash": "0x5acdc926ec2c3044e354d01c0226111be6d107f2dabea643e454b5baea1e1852",
+    "validatorId": "res-it-bob",
+    "networkId": "net_e6ca1cbf",
+    "chain": {
+      "version": 1,
+      "networkId": "net_e6ca1cbf",
+      "validatorId": "res-it-bob",
+      "observerNodeId": "net_e6ca1cbf-a",
+      "genesisHash": "0x4a5946e4511032ae7262379f88711368af31b0cc79c8fbec6cab41bfd4f48a5c",
+      "faultStartedAt": "2026-11-25T04:38:50.152Z",
+      "faultEndedAt": "2026-11-25T04:39:08.219Z",
+      "recoveredAt": "2026-11-25T04:39:10.238Z",
+      "observations": [
+        {
+          "phase": "before-fault",
+          "at": "2026-11-25T04:38:50.022Z",
+          "best": {
+            "number": 4,
+            "hash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287"
+          },
+          "finalized": {
+            "number": 2,
+            "hash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45"
+          }
+        },
+        {
+          "phase": "during-fault",
+          "at": "2026-11-25T04:38:50.202Z",
+          "best": {
+            "number": 4,
+            "hash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287"
+          },
+          "finalized": {
+            "number": 2,
+            "hash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45"
+          }
+        },
+        {
+          "phase": "during-fault",
+          "at": "2026-11-25T04:39:08.175Z",
+          "best": {
+            "number": 7,
+            "hash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70"
+          },
+          "finalized": {
+            "number": 2,
+            "hash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45"
+          }
+        },
+        {
+          "phase": "after-recovery",
+          "at": "2026-11-25T04:39:08.230Z",
+          "best": {
+            "number": 7,
+            "hash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70"
+          },
+          "finalized": {
+            "number": 2,
+            "hash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45"
+          }
+        },
+        {
+          "phase": "after-recovery",
+          "at": "2026-11-25T04:39:10.238Z",
+          "best": {
+            "number": 7,
+            "hash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70"
+          },
+          "finalized": {
+            "number": 5,
+            "hash": "0x3fbf321baf24e5890482a98886fabce1d5dca0f592f8fc4523a8413af5b5b46c"
+          }
+        }
+      ],
+      "gaps": [],
+      "metrics": {
+        "recovered": true,
+        "timeToRecoverMs": 2019,
+        "finalityGapBlocks": 5,
+        "blocksMissed": 0,
+        "expectedBlockTimeMs": 6000
+      },
+      "consensus": {
+        "consensusVersion": 2,
+        "babeAuthorshipVersion": 2,
+        "finalityVersion": 2,
+        "authorings": [
+          {
+            "blockNumber": 4,
+            "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+            "slot": 299263588,
+            "kind": "secondary-plain",
+            "authorityIndex": 1,
+            "authoritySetId": "babe:0:fd284d37a9d1315f",
+            "authorityKey": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+            "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+            "epoch": 0,
+            "sessionId": 0,
+            "outcome": "authored",
+            "verification": "digest+secondary-rule",
+            "reasons": [
+              "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+            ]
+          },
+          {
+            "blockNumber": 4,
+            "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+            "slot": 299263588,
+            "kind": "secondary-plain",
+            "authorityIndex": 1,
+            "authoritySetId": "babe:0:fd284d37a9d1315f",
+            "authorityKey": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+            "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+            "epoch": 0,
+            "sessionId": 0,
+            "outcome": "authored",
+            "verification": "digest+secondary-rule",
+            "reasons": [
+              "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+            ]
+          },
+          {
+            "blockNumber": 7,
+            "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+            "slot": 299263591,
+            "kind": "primary",
+            "authorityIndex": 0,
+            "authoritySetId": "babe:0:fd284d37a9d1315f",
+            "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+            "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+            "epoch": 0,
+            "sessionId": 0,
+            "outcome": "authored",
+            "verification": "digest",
+            "reasons": [
+              "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+            ]
+          },
+          {
+            "blockNumber": 7,
+            "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+            "slot": 299263591,
+            "kind": "primary",
+            "authorityIndex": 0,
+            "authoritySetId": "babe:0:fd284d37a9d1315f",
+            "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+            "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+            "epoch": 0,
+            "sessionId": 0,
+            "outcome": "authored",
+            "verification": "digest",
+            "reasons": [
+              "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+            ]
+          },
+          {
+            "blockNumber": 7,
+            "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+            "slot": 299263591,
+            "kind": "primary",
+            "authorityIndex": 0,
+            "authoritySetId": "babe:0:fd284d37a9d1315f",
+            "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+            "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+            "epoch": 0,
+            "sessionId": 0,
+            "outcome": "authored",
+            "verification": "digest",
+            "reasons": [
+              "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+            ]
+          }
+        ],
+        "authoritySets": [
+          {
+            "authoritySetId": "babe:0:fd284d37a9d1315f",
+            "epoch": 0,
+            "startSlot": 0,
+            "durationSlots": 1200,
+            "genesisSlot": 299263585,
+            "randomness": "0x0000000000000000000000000000000000000000000000000000000000000000",
+            "authorities": [
+              {
+                "index": 0,
+                "key": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+                "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+                "weight": "1"
+              },
+              {
+                "index": 1,
+                "key": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+                "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+                "weight": "1"
+              }
+            ]
+          }
+        ],
+        "finality": [
+          {
+            "blockNumber": 4,
+            "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+            "finalized": true,
+            "finalizedNumber": 2,
+            "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+            "setId": 0,
+            "epoch": 0,
+            "authorityCount": null,
+            "lagBlocks": 2,
+            "classification": "normal",
+            "reasons": [],
+            "at": "2026-11-25T04:38:50.198Z"
+          },
+          {
+            "blockNumber": 4,
+            "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+            "finalized": true,
+            "finalizedNumber": 2,
+            "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+            "setId": 0,
+            "epoch": 0,
+            "authorityCount": null,
+            "lagBlocks": 2,
+            "classification": "normal",
+            "reasons": [],
+            "at": "2026-11-25T04:38:50.205Z"
+          },
+          {
+            "blockNumber": 7,
+            "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+            "finalized": true,
+            "finalizedNumber": 2,
+            "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+            "setId": 0,
+            "epoch": 0,
+            "authorityCount": null,
+            "lagBlocks": 5,
+            "classification": "normal",
+            "reasons": [],
+            "at": "2026-11-25T04:39:08.219Z"
+          },
+          {
+            "blockNumber": 7,
+            "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+            "finalized": true,
+            "finalizedNumber": 2,
+            "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+            "setId": 0,
+            "epoch": 0,
+            "authorityCount": null,
+            "lagBlocks": 5,
+            "classification": "normal",
+            "reasons": [],
+            "at": "2026-11-25T04:39:08.235Z"
+          },
+          {
+            "blockNumber": 7,
+            "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+            "finalized": true,
+            "finalizedNumber": 5,
+            "finalizedHash": "0x3fbf321baf24e5890482a98886fabce1d5dca0f592f8fc4523a8413af5b5b46c",
+            "setId": 0,
+            "epoch": 0,
+            "authorityCount": null,
+            "lagBlocks": 2,
+            "classification": "normal",
+            "reasons": [],
+            "at": "2026-11-25T04:39:10.242Z"
+          }
+        ],
+        "grandpaTransitions": [],
+        "babeEpochTransitions": [],
+        "context": {
+          "eraId": 0,
+          "sessionId": 0,
+          "babeEpoch": 0,
+          "babeAuthoritySetId": "babe:0:fd284d37a9d1315f",
+          "grandpaSetId": 0,
+          "validatorCount": 2,
+          "eraPoints": {
+            "total": 83,
+            "byValidator": [
+              {
+                "validatorId": "5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM",
+                "points": 1
+              },
+              {
+                "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+                "points": 60
+              },
+              {
+                "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+                "points": 22
+              }
+            ]
+          },
+          "transitionsObserved": [
+            "unavailable reads: grandpa.authorities"
+          ]
+        },
+        "incomplete": false,
+        "incompleteReasons": []
+      }
+    },
+    "signature": {
+      "address": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+      "publicKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+      "scheme": "sr25519",
+      "source": "dev",
+      "dev": true,
+      "signature": "0x0888bed987ac670b0c1aaa314b4c004fa3af2d005642ab32df4b11fc0dd3000ac0da490d86e9fdb415914f9b0e6053dbc82370d97324197438d7dd50fa099e87"
+    },
+    "signedAt": "2026-11-25T04:39:10.421Z",
+    "evidenceHash": "0xdda8353aed4eb2e2c46fd7a5969f3f8996b7bf76805fdf949904e4cd83b26ce0",
+    "outcome": "passed"
+  },
+  "run": {
+    "id": "run-mwvmvrmc-11f060df",
+    "scenarioId": "scn-mwvmvrm2-36cf37d5",
+    "scenarioName": "resilience pause drill",
+    "scenarioSchemaVersion": 1,
+    "snapshot": {
+      "id": "scn-mwvmvrm2-36cf37d5",
+      "name": "resilience pause drill",
+      "description": "live proof-of-resilience test",
+      "schemaVersion": 1,
+      "tags": [],
+      "requires": {
+        "designatedTest": true,
+        "preset": "two-node"
+      },
+      "steps": [
+        {
+          "id": "s1",
+          "order": 0,
+          "operation": {
+            "type": "pause",
+            "config": {
+              "node": "bob",
+              "durationMs": 15000
+            }
+          },
+          "delayBeforeMs": 0,
+          "delayAfterMs": 0,
+          "timeoutMs": 90000,
+          "preconditions": [
+            {
+              "kind": "rpc-reachable",
+              "expect": true,
+              "node": "bob"
+            },
+            {
+              "kind": "process-state",
+              "expect": [
+                "running"
+              ],
+              "node": "bob"
+            }
+          ],
+          "postconditions": [
+            {
+              "kind": "recovery-verified",
+              "node": "bob"
+            },
+            {
+              "kind": "rpc-reachable",
+              "expect": true,
+              "node": "bob"
+            }
+          ]
+        }
+      ],
+      "execution": {
+        "onPreconditionFailed": "abort-run",
+        "onStepFailed": "abort-run",
+        "onVerificationInconclusive": "fail-step",
+        "onStepTimeout": "fail-step",
+        "onCleanupFailed": "cancel-run",
+        "cancellation": "cleanup-then-stop"
+      },
+      "validation": {
+        "valid": true,
+        "schemaVersion": 1,
+        "issues": [],
+        "errorCount": 0,
+        "warningCount": 0,
+        "worstCaseDurationMs": 90000,
+        "stepCount": 1
+      },
+      "validationStatus": "valid",
+      "createdBy": "it",
+      "updatedBy": "it",
+      "createdAt": "2026-11-25T04:38:49.994Z",
+      "updatedAt": "2026-11-25T04:38:49.994Z"
+    },
+    "networkId": "net_e6ca1cbf",
+    "networkName": "res-it",
+    "state": "completed",
+    "currentStepId": "s1",
+    "targetNodes": [
+      {
+        "label": "bob",
+        "nodeId": "net_e6ca1cbf-b",
+        "nodeName": "res-it-bob"
+      }
+    ],
+    "requestedBy": "it",
+    "replayOfRunId": null,
+    "executorPid": 2547,
+    "steps": [
+      {
+        "stepId": "s1",
+        "order": 0,
+        "operationType": "pause",
+        "faultType": "pause",
+        "nodeLabel": "bob",
+        "nodeId": "net_e6ca1cbf-b",
+        "nodeName": "res-it-bob",
+        "state": "completed",
+        "startedAt": "2026-11-25T04:38:50.012Z",
+        "finishedAt": "2026-11-25T04:39:08.179Z",
+        "preconditions": [
+          {
+            "kind": "rpc-reachable",
+            "node": "bob",
+            "nodeId": "net_e6ca1cbf-b",
+            "verdict": "satisfied",
+            "detail": "rpc-reachable=true (expect true): rpc reachable (peers=1), head=#4",
+            "attempts": 1,
+            "waitedMs": 5,
+            "at": "2026-11-25T04:38:50.018Z"
+          },
+          {
+            "kind": "process-state",
+            "node": "bob",
+            "nodeId": "net_e6ca1cbf-b",
+            "verdict": "satisfied",
+            "detail": "process status=running pid=2635 alive=true; expect [running]",
+            "attempts": 1,
+            "waitedMs": 0,
+            "at": "2026-11-25T04:38:50.018Z"
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "recovery-verified",
+            "node": "bob",
+            "nodeId": "net_e6ca1cbf-b",
+            "verdict": "satisfied",
+            "detail": "latest fault flt-mwvmvrn5-6035a689 (pause, state=completed) recoveryVerified=true",
+            "attempts": 1,
+            "waitedMs": 0,
+            "at": "2026-11-25T04:39:08.174Z"
+          },
+          {
+            "kind": "rpc-reachable",
+            "node": "bob",
+            "nodeId": "net_e6ca1cbf-b",
+            "verdict": "satisfied",
+            "detail": "rpc-reachable=true (expect true): rpc reachable (peers=1), head=#7",
+            "attempts": 1,
+            "waitedMs": 4,
+            "at": "2026-11-25T04:39:08.178Z"
+          }
+        ],
+        "verification": "satisfied",
+        "faultId": "flt-mwvmvrn5-6035a689",
+        "outcome": "verified",
+        "claims": {
+          "applied": true,
+          "effectObserved": true,
+          "faultRemoved": true,
+          "recovered": true,
+          "recoveryVerified": true
+        },
+        "durationMs": 18120,
+        "policyApplied": null,
+        "warnings": [],
+        "error": null
+      }
+    ],
+    "validation": {
+      "valid": true,
+      "schemaVersion": 1,
+      "issues": [],
+      "errorCount": 0,
+      "warningCount": 0,
+      "worstCaseDurationMs": 90000,
+      "stepCount": 1
+    },
+    "warnings": [],
+    "error": null,
+    "cleanup": {
+      "checkedAt": "2026-11-25T04:39:08.180Z",
+      "activeFaultsFound": 0,
+      "actions": [],
+      "quarantined": false,
+      "verified": true,
+      "detail": "active faults at finish: 0; nothing to roll back; no quarantine"
+    },
+    "cancellation": null,
+    "createdAt": "2026-11-25T04:38:50.004Z",
+    "startedAt": "2026-11-25T04:38:50.011Z",
+    "updatedAt": "2026-11-25T04:39:08.180Z",
+    "finishedAt": "2026-11-25T04:39:08.180Z",
+    "currentStepOrder": 0
+  },
+  "verificationOnline": {
+    "status": "verified",
+    "reasons": [
+      "drill outcome: passed (finality advanced past the pre-fault maximum and all metrics are derivable)",
+      "chain: 11 block hash(es) match the network",
+      "DEV KEY: signed with a public test key — proves integrity, not operator identity"
+    ],
+    "integrity": {
+      "fingerprintMatches": true,
+      "recomputedFingerprint": "0xe12fe3d16247d39e33863244120c640785ebdd05e2b0392a0a7b851122840f45",
+      "signatureValid": true,
+      "addressMatchesKey": true,
+      "metadataMatches": true,
+      "dev": true
+    },
+    "chain": {
+      "status": "verified",
+      "reason": "11 block hash(es) match the network",
+      "checks": [
+        {
+          "phase": "genesis",
+          "kind": "genesis",
+          "number": 0,
+          "expected": "0x4a5946e4511032ae7262379f88711368af31b0cc79c8fbec6cab41bfd4f48a5c",
+          "actual": "0x4a5946e4511032ae7262379f88711368af31b0cc79c8fbec6cab41bfd4f48a5c",
+          "ok": true
+        },
+        {
+          "phase": "before-fault",
+          "kind": "best",
+          "number": 4,
+          "expected": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "actual": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "ok": true
+        },
+        {
+          "phase": "before-fault",
+          "kind": "finalized",
+          "number": 2,
+          "expected": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "actual": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "ok": true
+        },
+        {
+          "phase": "during-fault",
+          "kind": "best",
+          "number": 4,
+          "expected": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "actual": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "ok": true
+        },
+        {
+          "phase": "during-fault",
+          "kind": "finalized",
+          "number": 2,
+          "expected": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "actual": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "ok": true
+        },
+        {
+          "phase": "during-fault",
+          "kind": "best",
+          "number": 7,
+          "expected": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "actual": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "ok": true
+        },
+        {
+          "phase": "during-fault",
+          "kind": "finalized",
+          "number": 2,
+          "expected": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "actual": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "ok": true
+        },
+        {
+          "phase": "after-recovery",
+          "kind": "best",
+          "number": 7,
+          "expected": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "actual": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "ok": true
+        },
+        {
+          "phase": "after-recovery",
+          "kind": "finalized",
+          "number": 2,
+          "expected": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "actual": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "ok": true
+        },
+        {
+          "phase": "after-recovery",
+          "kind": "best",
+          "number": 7,
+          "expected": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "actual": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "ok": true
+        },
+        {
+          "phase": "after-recovery",
+          "kind": "finalized",
+          "number": 5,
+          "expected": "0x3fbf321baf24e5890482a98886fabce1d5dca0f592f8fc4523a8413af5b5b46c",
+          "actual": "0x3fbf321baf24e5890482a98886fabce1d5dca0f592f8fc4523a8413af5b5b46c",
+          "ok": true
+        }
+      ]
+    },
+    "devKey": true,
+    "consensus": {
+      "consensusVersion": 2,
+      "babeAuthorshipVersion": 2,
+      "finalityVersion": 2,
+      "authorings": [
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "slot": 299263588,
+          "kind": "secondary-plain",
+          "authorityIndex": 1,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+          "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest+secondary-rule",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "slot": 299263588,
+          "kind": "secondary-plain",
+          "authorityIndex": 1,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+          "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest+secondary-rule",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "slot": 299263591,
+          "kind": "primary",
+          "authorityIndex": 0,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "slot": 299263591,
+          "kind": "primary",
+          "authorityIndex": 0,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "slot": 299263591,
+          "kind": "primary",
+          "authorityIndex": 0,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        }
+      ],
+      "authoritySets": [
+        {
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "epoch": 0,
+          "startSlot": 0,
+          "durationSlots": 1200,
+          "genesisSlot": 299263585,
+          "randomness": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "authorities": [
+            {
+              "index": 0,
+              "key": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+              "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+              "weight": "1"
+            },
+            {
+              "index": 1,
+              "key": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+              "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+              "weight": "1"
+            }
+          ]
+        }
+      ],
+      "finality": [
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 2,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:38:50.198Z"
+        },
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 2,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:38:50.205Z"
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 5,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:39:08.219Z"
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 5,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:39:08.235Z"
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "finalized": true,
+          "finalizedNumber": 5,
+          "finalizedHash": "0x3fbf321baf24e5890482a98886fabce1d5dca0f592f8fc4523a8413af5b5b46c",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 2,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:39:10.242Z"
+        }
+      ],
+      "grandpaTransitions": [],
+      "babeEpochTransitions": [],
+      "context": {
+        "eraId": 0,
+        "sessionId": 0,
+        "babeEpoch": 0,
+        "babeAuthoritySetId": "babe:0:fd284d37a9d1315f",
+        "grandpaSetId": 0,
+        "validatorCount": 2,
+        "eraPoints": {
+          "total": 83,
+          "byValidator": [
+            {
+              "validatorId": "5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM",
+              "points": 1
+            },
+            {
+              "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+              "points": 60
+            },
+            {
+              "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+              "points": 22
+            }
+          ]
+        },
+        "transitionsObserved": [
+          "unavailable reads: grandpa.authorities"
+        ]
+      },
+      "incomplete": false,
+      "incompleteReasons": []
+    },
+    "evidence": {
+      "outcome": "passed",
+      "reasons": [
+        "finality advanced past the pre-fault maximum and all metrics are derivable"
+      ],
+      "integrity": {
+        "complete": true,
+        "metricsMatch": true,
+        "timestampsConsistent": true,
+        "observationsValid": true,
+        "consensus": {
+          "present": true,
+          "complete": true,
+          "reasons": []
+        },
+        "checks": [
+          {
+            "name": "observations",
+            "ok": true,
+            "detail": "5 observation(s) have valid block references and finalized ≤ best"
+          },
+          {
+            "name": "timestamps",
+            "ok": true,
+            "detail": "observations are phase-ordered and consistent with the fault window"
+          },
+          {
+            "name": "phase-coverage",
+            "ok": true,
+            "detail": "before-fault, during-fault and after-recovery observations are all present"
+          },
+          {
+            "name": "metrics-recomputation",
+            "ok": true,
+            "detail": "stored metrics equal a fresh recomputation from the observations"
+          },
+          {
+            "name": "metric-derivability",
+            "ok": true,
+            "detail": "time-to-recover, finality gap and blocks missed are all derivable"
+          },
+          {
+            "name": "consensus-context",
+            "ok": true,
+            "detail": "BABE authorship / GRANDPA finality / session-epoch context is complete"
+          }
+        ],
+        "reasons": [],
+        "recomputedMetrics": {
+          "recovered": true,
+          "timeToRecoverMs": 2019,
+          "finalityGapBlocks": 5,
+          "blocksMissed": 0,
+          "expectedBlockTimeMs": 6000,
+          "recoveredAt": "2026-11-25T04:39:10.238Z"
+        },
+        "evidenceHash": "0xdda8353aed4eb2e2c46fd7a5969f3f8996b7bf76805fdf949904e4cd83b26ce0"
+      }
+    },
+    "evidenceHashMatches": true
+  },
+  "verificationOffline": {
+    "status": "unverifiable",
+    "reasons": [
+      "drill outcome: passed (finality advanced past the pre-fault maximum and all metrics are derivable)",
+      "chain: network offline: no RPC endpoint for this network",
+      "DEV KEY: signed with a public test key — proves integrity, not operator identity"
+    ],
+    "integrity": {
+      "fingerprintMatches": true,
+      "recomputedFingerprint": "0xe12fe3d16247d39e33863244120c640785ebdd05e2b0392a0a7b851122840f45",
+      "signatureValid": true,
+      "addressMatchesKey": true,
+      "metadataMatches": true,
+      "dev": true
+    },
+    "chain": {
+      "status": "unverifiable",
+      "reason": "network offline: no RPC endpoint for this network",
+      "checks": []
+    },
+    "devKey": true,
+    "consensus": {
+      "consensusVersion": 2,
+      "babeAuthorshipVersion": 2,
+      "finalityVersion": 2,
+      "authorings": [
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "slot": 299263588,
+          "kind": "secondary-plain",
+          "authorityIndex": 1,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+          "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest+secondary-rule",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "slot": 299263588,
+          "kind": "secondary-plain",
+          "authorityIndex": 1,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+          "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest+secondary-rule",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "slot": 299263591,
+          "kind": "primary",
+          "authorityIndex": 0,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "slot": 299263591,
+          "kind": "primary",
+          "authorityIndex": 0,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "slot": 299263591,
+          "kind": "primary",
+          "authorityIndex": 0,
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "authorityKey": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+          "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+          "epoch": 0,
+          "sessionId": 0,
+          "outcome": "authored",
+          "verification": "digest",
+          "reasons": [
+            "epoch start slot 0 precedes genesis slot 299263585: the recorded epoch bounds are not usable, so slot membership was not checked"
+          ]
+        }
+      ],
+      "authoritySets": [
+        {
+          "authoritySetId": "babe:0:fd284d37a9d1315f",
+          "epoch": 0,
+          "startSlot": 0,
+          "durationSlots": 1200,
+          "genesisSlot": 299263585,
+          "randomness": "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "authorities": [
+            {
+              "index": 0,
+              "key": "0xd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d",
+              "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+              "weight": "1"
+            },
+            {
+              "index": 1,
+              "key": "0x8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48",
+              "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+              "weight": "1"
+            }
+          ]
+        }
+      ],
+      "finality": [
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 2,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:38:50.198Z"
+        },
+        {
+          "blockNumber": 4,
+          "blockHash": "0x65ee3900184bb60f2dc9fe1eca26e684697ff07edad2738cf9f05a6a1166a287",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 2,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:38:50.205Z"
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 5,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:39:08.219Z"
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "finalized": true,
+          "finalizedNumber": 2,
+          "finalizedHash": "0x40e838597248686477a14da258b2df8dd16ad14032f46f40c435820346d70e45",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 5,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:39:08.235Z"
+        },
+        {
+          "blockNumber": 7,
+          "blockHash": "0x6ac49af9082c2d695ba37305b9db85768a3c9bf06dfd5697e42fbca358670f70",
+          "finalized": true,
+          "finalizedNumber": 5,
+          "finalizedHash": "0x3fbf321baf24e5890482a98886fabce1d5dca0f592f8fc4523a8413af5b5b46c",
+          "setId": 0,
+          "epoch": 0,
+          "authorityCount": null,
+          "lagBlocks": 2,
+          "classification": "normal",
+          "reasons": [],
+          "at": "2026-11-25T04:39:10.242Z"
+        }
+      ],
+      "grandpaTransitions": [],
+      "babeEpochTransitions": [],
+      "context": {
+        "eraId": 0,
+        "sessionId": 0,
+        "babeEpoch": 0,
+        "babeAuthoritySetId": "babe:0:fd284d37a9d1315f",
+        "grandpaSetId": 0,
+        "validatorCount": 2,
+        "eraPoints": {
+          "total": 83,
+          "byValidator": [
+            {
+              "validatorId": "5C4hrfjw9DjXZTzV3MwzrrAr9P1MJhSrvWGWqi1eSuyUpnhM",
+              "points": 1
+            },
+            {
+              "validatorId": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+              "points": 60
+            },
+            {
+              "validatorId": "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY",
+              "points": 22
+            }
+          ]
+        },
+        "transitionsObserved": [
+          "unavailable reads: grandpa.authorities"
+        ]
+      },
+      "incomplete": false,
+      "incompleteReasons": []
+    },
+    "evidence": {
+      "outcome": "passed",
+      "reasons": [
+        "finality advanced past the pre-fault maximum and all metrics are derivable"
+      ],
+      "integrity": {
+        "complete": true,
+        "metricsMatch": true,
+        "timestampsConsistent": true,
+        "observationsValid": true,
+        "consensus": {
+          "present": true,
+          "complete": true,
+          "reasons": []
+        },
+        "checks": [
+          {
+            "name": "observations",
+            "ok": true,
+            "detail": "5 observation(s) have valid block references and finalized ≤ best"
+          },
+          {
+            "name": "timestamps",
+            "ok": true,
+            "detail": "observations are phase-ordered and consistent with the fault window"
+          },
+          {
+            "name": "phase-coverage",
+            "ok": true,
+            "detail": "before-fault, during-fault and after-recovery observations are all present"
+          },
+          {
+            "name": "metrics-recomputation",
+            "ok": true,
+            "detail": "stored metrics equal a fresh recomputation from the observations"
+          },
+          {
+            "name": "metric-derivability",
+            "ok": true,
+            "detail": "time-to-recover, finality gap and blocks missed are all derivable"
+          },
+          {
+            "name": "consensus-context",
+            "ok": true,
+            "detail": "BABE authorship / GRANDPA finality / session-epoch context is complete"
+          }
+        ],
+        "reasons": [],
+        "recomputedMetrics": {
+          "recovered": true,
+          "timeToRecoverMs": 2019,
+          "finalityGapBlocks": 5,
+          "blocksMissed": 0,
+          "expectedBlockTimeMs": 6000,
+          "recoveredAt": "2026-11-25T04:39:10.238Z"
+        },
+        "evidenceHash": "0xdda8353aed4eb2e2c46fd7a5969f3f8996b7bf76805fdf949904e4cd83b26ce0"
+      }
+    },
+    "evidenceHashMatches": true
+  },
+  "score": {
+    "version": 2,
+    "validatorId": "res-it-bob",
+    "score": 35,
+    "quality": 0.8837227301310888,
+    "confidence": 0.3934693390708879,
+    "coverage": 1,
+    "effectiveRuns": 0.9999999959887316,
+    "runs": 1,
+    "faultsSurvived": 1,
+    "latestCertifiedAt": "2026-11-25T04:39:10.421Z",
+    "asOf": "2026-11-25T04:39:10.436Z",
+    "perRun": [
+      {
+        "runId": "run-mwvmvrmc-11f060df",
+        "survived": true,
+        "quality": 0.8837227301310888,
+        "weight": 0.9999999959887316,
+        "ageDays": 1.7361111111111112e-7,
+        "coverage": 1,
+        "eligible": true
+      }
+    ],
+    "excluded": [],
+    "excludedReasons": {}
+  },
+  "anchor": {
+    "status": "in-block",
+    "blockHash": "0x1b9aabad3b2893f97f09c1ae34580cc966206ac060fcb0a7a463b49b74b65a70",
+    "extrinsicIndex": 1,
+    "txHash": "0x5bc07e518e7df3d510644d4ed60d7b43ec1bbbbd83dd0c701a7429a4297c30ad",
+    "remark": "kaizen:certificate:v1:0xe12fe3d16247d39e33863244120c640785ebdd05e2b0392a0a7b851122840f45",
+    "signer": "5HBnAqniYhyupDT1ccsTSRkdy3EbCAaZC6ii9XFon8WQwEaR",
+    "blockNumber": 616125,
+    "network": {
+      "ws": "wss://test-node-v3.portaldot.dev",
+      "genesisHash": "0xd4f9acbcf7f52388d8b095abe3c198d19fc510e0343e643e87cfbccb155283bd"
+    }
+  },
+  "workflow": {
+    "runId": "45548041657",
+    "url": "https://github.com/devshaydez/kaizen/actions/runs/45548041657",
+    "event": "schedule",
+    "sha": "8f2dffa582a8955b1af65f4eda7aa959322445be"
+  }
+}
